@@ -2708,29 +2708,6 @@ function initTheme(){
 
 
 
-function _ac(){
-  if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
-  if(_audioCtx&&_audioCtx.state==='suspended'){_audioCtx.resume();}
-  return _audioCtx;
-}
-function _tone(freq,vol,dur){
-  try{
-    const ctx=_ac();if(!ctx)return;
-    const t=ctx.currentTime;
-    const osc=ctx.createOscillator();
-    const gain=ctx.createGain();
-    osc.connect(gain);gain.connect(ctx.destination);
-    osc.type='sine';
-    osc.frequency.setValueAtTime(freq,t);
-    gain.gain.setValueAtTime(0,t);
-    gain.gain.linearRampToValueAtTime(vol,t+0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
-    osc.start(t);osc.stop(t+dur+0.05);
-  }catch(e){}
-}
-
-
-
 
 
 
@@ -4050,11 +4027,6 @@ function renderProds(){
   el.innerHTML=h||`<div class="empty"><div class="empty-t">Sin resultados para esa búsqueda</div></div>`;
 }
 function togP(id){document.getElementById('pb-'+id)?.classList.toggle('on');}
-function updSub(id){
-  // Reset subcategory input when category changes
-  const subInp=document.getElementById('pf-sub-'+id);
-  if(subInp) subInp.value='';
-}
 
 function catSelectorSearch(){
   const inp=document.getElementById('subcat-cat-search');
@@ -4197,12 +4169,6 @@ function saveP(id){
   p.subcategory=document.getElementById('pf-sub-'+id)?.value.trim()||'';
   p.ask=document.getElementById('pf-ask-'+id)?.value||'A cualquiera';
   push();renderProds();toast('Producto actualizado');
-}
-function addProd(){
-  const inp=document.getElementById('prod-inp'),name=inp.value.trim();
-  if(!name)return;if(products.find(p=>p.name.toLowerCase()===name.toLowerCase())){toast('Ya existe');return;}
-  products.push({id:'p'+Date.now(),name,category:'',subcategory:'',ask:'A cualquiera',active:true,sched:{days:[],freq:'irregular'}});
-  push();renderProds();inp.value='';toast(name+' agregado');
 }
 function useAsTemplate(srcId){
   const src=products.find(p=>p.id===srcId);if(!src)return;
@@ -4391,7 +4357,6 @@ function openSettings(){
   document.getElementById('ov-settings').classList.add('on');
 }
 function closeSettings(){document.getElementById('ov-settings').classList.remove('on');}
-function copyCode(){navigator.clipboard.writeText(sid).catch(()=>{});toast('Código copiado: '+sid);}
 
 function saveTmpls(){
   localStorage.setItem('tmpl-hay',document.getElementById('tmpl-hay').value);
