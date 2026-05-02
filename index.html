@@ -1817,6 +1817,17 @@ body.light .logo-box svg{stroke:#FFFFFF}
 
 body.light #logo-img { filter: invert(1); }
 .logo-box img{width:22px;height:22px;object-fit:contain}
+
+/* Backup buttons */
+.btn-backup{
+  flex:1;border-radius:8px;padding:10px;font-size:12px;font-weight:600;
+  cursor:pointer;border-width:1px;border-style:solid;
+  transition:filter .15s ease, transform .1s ease;
+}
+.btn-backup:hover{filter:brightness(1.25)}
+.btn-backup:active{transform:scale(.97)}
+.btn-backup-dl{background:var(--emerald-soft);color:var(--emerald-text);border-color:var(--emerald-border)}
+.btn-backup-ul{background:var(--cyan-soft);color:var(--cyan-text);border-color:var(--cyan-border)}
 </style>
 </head>
 <body>
@@ -2012,8 +2023,8 @@ body.light #logo-img { filter: invert(1); }
       <button onclick="logout()" style="background:var(--rose-soft);color:var(--rose-text);border:1px solid var(--rose-border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">Cerrar sesión</button>
       </div>
       <div class="ssect" style="display:flex;gap:10px">
-        <button onclick="downloadBackup()" style="flex:1;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">Descargar respaldo</button>
-        <button onclick="uploadBackup()" style="flex:1;background:var(--cyan-soft);color:var(--cyan-text);border:1px solid var(--cyan-border);border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">Restaurar respaldo</button>
+        <button onclick="downloadBackup()" class="btn-backup btn-backup-dl">Descargar respaldo</button>
+        <button onclick="uploadBackup()" class="btn-backup btn-backup-ul">Restaurar respaldo</button>
     </div>
     <div class="ssect">
       <div class="ssect-hdr"><div class="ssect-ico g"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><span class="ssect-name">Mensajes automáticos</span></div>
