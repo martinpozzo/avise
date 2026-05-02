@@ -22,11 +22,9 @@
 :root{
   /* Surfaces — pure neutral grayscale (zinc/slate hybrid) */
   --bg: #0E1014;
-  --surface-0: #161A20;
   --surface-1: #1C2129;
   --surface-2: #252B35;
   --surface-3: #303743;
-  --surface-hover: #353D4A;
   
   /* Borders — pure neutral */
   --line-1: rgba(255,255,255,.05);
@@ -78,7 +76,6 @@
   
   /* Blue for info */
   --blue-soft: rgba(59,130,246,.1);
-  --blue-border: rgba(59,130,246,.3);
   --blue-text: #93C5FD;
   --blue-solid: #3B82F6;
   
@@ -97,7 +94,6 @@
   /* Easing */
   --ease: cubic-bezier(.4,0,.2,1);
   --ease-smooth: cubic-bezier(.32,.72,.32,1);
-  --ease-spring: cubic-bezier(.34,1.56,.64,1);
 }
 
 /* ═══ RESET ═══ */
@@ -431,9 +427,6 @@ select option{background:var(--surface-1);color:var(--text-1)}
   overflow:hidden;
   text-overflow:ellipsis;
 }
-
-
-
 
 .npcard-avatar-wrap{flex-shrink:0;position:relative}
 .npcard-head-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding-top:1px}
@@ -1319,9 +1312,6 @@ details[open] .trash-chevron{transform:rotate(180deg)}
   .np-act{padding:11px 10px;font-size:12px}
 }
 
-
-
-
 /* ═══ MULTI-SELECT ═══ */
 .npcard-head .card-chk{margin-right:-2px}
 .card-chk{
@@ -1718,9 +1708,6 @@ body.light .logo-txt{color:#FFFFFF}
 body.light .logo-box{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);color:#FFFFFF}
 body.light .logo-box svg{stroke:#FFFFFF}
 
-
-
-
 /* Prevent horizontal overflow on mobile */
 .cards,.ctrl,.nbar-inner,
 .npcard,.cq-card,.pitem,.ssect,
@@ -1767,9 +1754,6 @@ body.light .logo-box svg{stroke:#FFFFFF}
 .morph-out { animation: morphOut .3s cubic-bezier(.4,0,.6,1) forwards !important; transform-origin: center; }
 .morph-in  { animation: morphIn  .42s cubic-bezier(.2,1.15,.4,1) forwards !important; transform-origin: center; }
 .morph-pulse { animation: morphIn .42s cubic-bezier(.2,1.15,.4,1) forwards, morphPulse .8s ease-out forwards !important; transform-origin: center; }
-
-
-
 
 /* Custom scrollbar */
 /* Hide ALL scrollbars globally — vertical and horizontal */
@@ -2687,11 +2671,6 @@ function initTheme(){
     if(lightIco) lightIco.style.display='';
   }
 }
-
-
-
-
-
 
 function toggleSelectMode(on){
   _selectMode=on===undefined?!_selectMode:on;
