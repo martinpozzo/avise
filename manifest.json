@@ -1,0 +1,24 @@
+{
+  "name": "Avise",
+  "short_name": "Avise",
+  "description": "Stock management app for WhatsApp customer service",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070E1A",
+  "theme_color": "#16A34A",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
