@@ -1,0 +1,11 @@
+/icon-192.png
+  Content-Type: image/png
+  Cache-Control: public, max-age=31536000
+
+/icon-512.png
+  Content-Type: image/png
+  Cache-Control: public, max-age=31536000
+
+/manifest.json
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache
