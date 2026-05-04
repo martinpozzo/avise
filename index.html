@@ -1102,8 +1102,8 @@ details[open] .trash-chevron{transform:rotate(180deg)}
 
   /* Product tiles */
   .npcard-prods{gap:7px}
-  .npitem{padding:11px 13px;border-radius:11px}
-  .npitem-name{font-size:13px}
+  .npitem{padding:10px 12px;border-radius:10px}
+  .npitem-name{font-size:11.5px;white-space:normal;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.3}
   .npitem-lbl{font-size:11px}
   .npitem-act{flex-wrap:wrap;gap:7px;margin-top:10px;padding-top:9px}
   .np-btn{min-height:40px;font-size:12px;flex:1;justify-content:center;padding:8px 10px;border-radius:9px}
@@ -2876,7 +2876,7 @@ function upBadges(){
 
 function expTag(d,p){
   if(p&&p.arrived) return `<span class="cptag tag-arrived">${ICO.CHECK} Ingresó</span>`;
-  if(!d) return '';
+  if(!d) return `<span class="cptag tag-indef">Sin fecha</span>`;
   if(d==='indef') return `<span class="cptag tag-indef">Sin fecha</span>`;
   const today=new Date();today.setHours(0,0,0,0);
   const dt=new Date(d+'T12:00:00');dt.setHours(0,0,0,0);
@@ -2978,7 +2978,7 @@ function buildCard(it,delay){
   it.products.forEach((p,i)=>{
     const pOv=isArrival(p.exp)&&!it.done&&!p.arrived;
     const rpId=`rp-${it.id}-${i}`;
-    const showActions=(p.arrived||pOv||itemHasOverdue)&&!it.done;
+    const showActions=!it.done;
     
     prodsHtml+=`<div class="npitem${p.arrived?' npitem-done':''}${pOv?' npitem-over':''}">`;
     prodsHtml+=`<div class="npitem-main"><span class="npitem-name">${esc(p.name)}</span>${expTag(p.exp,p)}</div>`;
