@@ -471,6 +471,7 @@ select option{background:var(--surface-1);color:var(--text-1)}
   padding:11px 13px;
   transition:background .22s ease, border-color .22s ease;
   position:relative;
+  cursor:pointer;
 }
 .npitem:hover{background:var(--surface-3);border-color:var(--line-2)}
 .npitem.npitem-over{position:relative;background:var(--surface-2);border-color:var(--line-2)}.npitem.npitem-over::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--emerald-solid);border-radius:var(--r-md) 0 0 var(--r-md)}
@@ -1106,15 +1107,15 @@ details[open] .trash-chevron{transform:rotate(180deg)}
   .npitem-name{font-size:11.5px;white-space:normal;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.3}
   .npitem-lbl{font-size:11px}
   .npitem-act{flex-wrap:wrap;gap:7px;margin-top:10px;padding-top:9px}
-  .np-btn{min-height:40px;font-size:12px;flex:1;justify-content:center;padding:8px 10px;border-radius:9px}
+  .np-btn{min-height:34px;font-size:11px;flex:1;justify-content:center;padding:5px 8px;border-radius:8px}
 
   /* Arrived row */
   
-  .np-act-icon{min-width:42px;min-height:42px;border-radius:10px}
+  .np-act-icon{min-width:34px;min-height:34px;border-radius:9px;width:34px}
 
   /* Card actions */
   .npcard-acts{gap:7px;padding-top:10px;flex-wrap:wrap}
-  .np-act{min-height:46px;padding:11px 12px;font-size:13px;border-radius:12px;gap:6px;flex:1;justify-content:center}
+  .np-act{min-height:34px;padding:7px 8px;font-size:11px;border-radius:9px;gap:4px;flex:1;justify-content:center}
 
   /* Reschedule panel */
   .rpanel{padding:11px 12px;border-radius:11px;margin-top:9px;gap:9px}
@@ -1309,7 +1310,7 @@ details[open] .trash-chevron{transform:rotate(180deg)}
   .cqpb-btns{flex-wrap:wrap}
   .cqpbb{min-width:calc(50% - 4px)}
   .npcard{padding:16px 14px 14px}
-  .np-act{padding:11px 10px;font-size:12px}
+  .np-act{padding:6px 8px;font-size:11px}
 }
 
 /* ═══ MULTI-SELECT ═══ */
@@ -2980,13 +2981,15 @@ function buildCard(it,delay){
     const rpId=`rp-${it.id}-${i}`;
     const showActions=!it.done;
     
-    prodsHtml+=`<div class="npitem${p.arrived?' npitem-done':''}${pOv?' npitem-over':''}">`;
+    const actId=`act-${it.id}-${i}`;
+    const autoExpand=pOv||p.arrived;
+    prodsHtml+=`<div class="npitem${p.arrived?' npitem-done':''}${pOv?' npitem-over':''}" onclick="if(!event.target.closest('button')&&!event.target.closest('.rpanel'))togAct('${actId}')">`;
     prodsHtml+=`<div class="npitem-main"><span class="npitem-name">${esc(p.name)}</span>${expTag(p.exp,p)}</div>`;
     
     if(p.arrived&&!it.done){
-      prodsHtml+=`<div class="npitem-act"><span class="npitem-lbl">${ICO.CHECK} Ingresó</span><button class="np-btn np-btn-ghost" onclick="unmarkArrived(${it.id},${i})">${ICO.REFRESH}</button></div>`;
+      prodsHtml+=`<div class="npitem-act" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">${ICO.CHECK} Ingresó</span><button class="np-btn np-btn-ghost" onclick="unmarkArrived(${it.id},${i})">${ICO.REFRESH}</button></div>`;
     } else if(showActions){
-      prodsHtml+=`<div class="npitem-act"><span class="npitem-lbl">¿Ingresó?</span><button class="np-btn np-btn-go" onclick="markArrived(${it.id},${i})">${ICO.CHECK} Sí</button><button class="np-btn np-btn-ghost" onclick="togRp('${rpId}',event)">No</button></div>`;
+      prodsHtml+=`<div class="npitem-act" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">¿Ingresó?</span><button class="np-btn np-btn-go" onclick="markArrived(${it.id},${i})">${ICO.CHECK} Sí</button><button class="np-btn np-btn-ghost" onclick="togRp('${rpId}',event)">No</button></div>`;
       prodsHtml+=`<div class="rpanel" id="${rpId}"><div class="rp-dates">`;
       if(p.exp&&p.exp!=='indef'&&!isArrival(p.exp)){
         prodsHtml+=`<button class="rqd" onclick="rpKeep(${it.id},${i},this)">${ICO.CHECK} Mantener (${fd(p.exp)})</button>`;
@@ -3083,6 +3086,11 @@ function rpDel(id,idx){
   }
   if(it.products.length) push();
   toast('Producto eliminado');
+}
+function togAct(id){
+  const el=$(id);
+  if(!el) return;
+  el.style.display = el.style.display==='none' ? 'flex' : 'none';
 }
 function markArrived(id,idx){
   const it=items.find(i=>i.id===id);if(!it||!it.products[idx])return;
