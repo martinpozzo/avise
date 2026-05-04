@@ -1898,11 +1898,9 @@ body.light #logo-img { filter: invert(1); }
             <label>Mostrar inactivos</label>
           </div>
           <div class="dd-results" id="dd-results"></div>
-          <div id="dd-sel-footer" style="display:none;padding:8px 10px;border-top:1px solid var(--line-2)">
-            <button style="width:100%;padding:9px;border-radius:8px;font-size:13px;font-weight:700;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);cursor:pointer" onclick="_confirmProdSel()">✓ <span id="dd-sel-label">Agregar</span></button>
-          </div>
         </div>
       </div>
+      <button id="dd-sel-footer" onclick="_confirmProdSel()" style="display:none;width:100%;margin-top:6px;padding:10px;border-radius:var(--r-md);font-size:13px;font-weight:700;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);cursor:pointer;animation:cin .15s ease">✓ <span id="dd-sel-label">Agregar</span></button>
       <button class="btn-add-prod" onclick="addFormProd()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Agregar producto</button>
     </div>
     <div class="fld"><label class="lbl">Nota interna</label><textarea class="txt" id="f-note" placeholder="Quiere 3 cajas..."></textarea></div>
