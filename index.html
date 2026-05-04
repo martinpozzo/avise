@@ -1898,9 +1898,11 @@ body.light #logo-img { filter: invert(1); }
             <label>Mostrar inactivos</label>
           </div>
           <div class="dd-results" id="dd-results"></div>
+          <div id="dd-sel-footer" style="display:none;padding:8px 10px;border-top:1px solid var(--line-2)">
+            <button style="width:100%;padding:9px;border-radius:8px;font-size:13px;font-weight:700;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);cursor:pointer" onclick="_confirmProdSel()">✓ <span id="dd-sel-label">Agregar</span></button>
+          </div>
         </div>
       </div>
-      <button id="btn-add-sel-prods" class="btn-add-prod btn-add-sel" onclick="_confirmProdSel()" style="display:none;background:var(--emerald-soft);color:var(--emerald-text);border-color:var(--emerald-border);font-weight:700"></button>
       <button class="btn-add-prod" onclick="addFormProd()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Agregar producto</button>
     </div>
     <div class="fld"><label class="lbl">Nota interna</label><textarea class="txt" id="f-note" placeholder="Quiere 3 cajas..."></textarea></div>
@@ -3783,16 +3785,22 @@ function _togProdSel(name,el){
   _updProdSelBtn();
 }
 function _updProdSelBtn(){
-  const btn=$('btn-add-sel-prods');
-  if(!btn) return;
-  if(_prodSel.size>0){btn.style.display='flex';btn.textContent=`✓ Agregar ${_prodSel.size} producto${_prodSel.size>1?'s':''}`;}
-  else{btn.style.display='none';}
+  const footer=$('dd-sel-footer');
+  const label=$('dd-sel-label');
+  if(!footer) return;
+  if(_prodSel.size>0){
+    footer.style.display='block';
+    if(label) label.textContent=`Agregar ${_prodSel.size} producto${_prodSel.size>1?'s':''}`;
+  } else {
+    footer.style.display='none';
+  }
 }
 function _confirmProdSel(){
   _prodSel.forEach(name=>addFormProdByName(name));
   _prodSel.clear();
   $('f-prod-inp').value='';
   $('prod-dd').classList.remove('on');
+  $('dd-results').innerHTML='';
   _updProdSelBtn();
 }
 function selProd(name,isNew){
