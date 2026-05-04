@@ -1792,6 +1792,12 @@ body.light #logo-img { filter: invert(1); }
 .btn-backup:active{transform:scale(.97)}
 .btn-backup-dl{background:var(--emerald-soft);color:var(--emerald-text);border-color:var(--emerald-border)}
 .btn-backup-ul{background:var(--cyan-soft);color:var(--cyan-text);border-color:var(--cyan-border)}
+
+/* Multi-select dropdown */
+.dd-item-chk{display:flex;align-items:center;gap:10px;user-select:none}
+.dd-chk{width:16px;height:16px;border:2px solid var(--line-3);border-radius:4px;flex-shrink:0;transition:all .15s;background:transparent}
+.dd-chk.checked{background:var(--emerald-text);border-color:var(--emerald-text);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 6L9 17l-5-5' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");background-size:12px;background-repeat:no-repeat;background-position:center}
+.btn-add-sel{justify-content:center;margin-bottom:6px;border-radius:var(--r-md);animation:cin .18s ease}
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -1894,6 +1900,7 @@ body.light #logo-img { filter: invert(1); }
           <div class="dd-results" id="dd-results"></div>
         </div>
       </div>
+      <button id="btn-add-sel-prods" class="btn-add-prod btn-add-sel" onclick="_confirmProdSel()" style="display:none;background:var(--emerald-soft);color:var(--emerald-text);border-color:var(--emerald-border);font-weight:700"></button>
       <button class="btn-add-prod" onclick="addFormProd()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Agregar producto</button>
     </div>
     <div class="fld"><label class="lbl">Nota interna</label><textarea class="txt" id="f-note" placeholder="Quiere 3 cajas..."></textarea></div>
@@ -3748,21 +3755,45 @@ function selCli(name,phone){
 // Product search
 let showInactive=false;
 function togInactive(){showInactive=!showInactive;$('chk-inactive').classList.toggle('on',showInactive);prodSearch();}
+let _prodSel=new Set();
 function prodSearch(){
   const q=$('f-prod-inp').value;
   const resultsEl=$('dd-results');
   const dd=$('prod-dd');
-  if(!q.trim()){dd.classList.remove('on');resultsEl.innerHTML='';return;}
+  if(!q.trim()){dd.classList.remove('on');resultsEl.innerHTML='';_prodSel.clear();_updProdSelBtn();return;}
   const m=products.filter(p=>(showInactive||p.active!==false)&&fuzzy(q,p.name));
   ddIdx=-1;
   const isNew=!products.find(p=>p.name.toLowerCase()===q.toLowerCase());
   let h='';
-  m.slice(0,8).forEach(p=>{
-    h+=`<div class="dd-item${p.active===false?' dim':''}" onclick="selProd('${jesc(p.name)}')">${esc(p.name)}${p.active===false?' <small style="opacity:.6">(inactivo)</small>':''}</div>`;
+  m.slice(0,12).forEach(p=>{
+    const chk=_prodSel.has(p.name)?'checked':'';
+    h+=`<div class="dd-item dd-item-chk${p.active===false?' dim':''}" onclick="_togProdSel('${jesc(p.name)}',this)">
+      <div class="dd-chk ${chk}" id="ddchk-${esc(p.name).replace(/[^a-z0-9]/gi,'_')}"></div>
+      <span>${esc(p.name)}${p.active===false?' <small style="opacity:.6">(inactivo)</small>':''}</span>
+    </div>`;
   });
   if(isNew) h+=`<div class="dd-item dim" onclick="selProd('${jesc(q)}',true)">${ICO.PLUS} Agregar "${esc(q)}"</div>`;
   resultsEl.innerHTML=h;
   dd.classList.add('on');
+  _updProdSelBtn();
+}
+function _togProdSel(name,el){
+  if(_prodSel.has(name)){_prodSel.delete(name);el.querySelector('.dd-chk')?.classList.remove('checked');}
+  else{_prodSel.add(name);el.querySelector('.dd-chk')?.classList.add('checked');}
+  _updProdSelBtn();
+}
+function _updProdSelBtn(){
+  const btn=$('btn-add-sel-prods');
+  if(!btn) return;
+  if(_prodSel.size>0){btn.style.display='flex';btn.textContent=`✓ Agregar ${_prodSel.size} producto${_prodSel.size>1?'s':''}`;}
+  else{btn.style.display='none';}
+}
+function _confirmProdSel(){
+  _prodSel.forEach(name=>addFormProdByName(name));
+  _prodSel.clear();
+  $('f-prod-inp').value='';
+  $('prod-dd').classList.remove('on');
+  _updProdSelBtn();
 }
 function selProd(name,isNew){
   if(isNew&&!products.find(p=>p.name.toLowerCase()===name.toLowerCase())){
