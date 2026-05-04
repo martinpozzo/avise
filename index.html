@@ -1093,13 +1093,13 @@ details[open] .trash-chevron{transform:rotate(180deg)}
   .btn-hide-mob{display:none}
 
   /* PENDIENTE CARDS */
-  .cards{gap:14px}
+  .cards{gap:16px}
   .npcard{padding:16px 14px 14px;border-radius:14px;gap:10px}
   .npcard-head{gap:9px}
   .npcard-name{font-size:15px;letter-spacing:-.2px}
   .npcard-time{font-size:11px}
   .npcard-crumb{font-size:9.5px;padding:2px 8px}
-  .npcard-code{font-size:9px;padding:2px 6px}
+  .npcard-code{font-size:9px;padding:2px 6px;flex-shrink:0}
 
   /* Product tiles */
   .npcard-prods{gap:7px}
@@ -1800,6 +1800,12 @@ body.light #logo-img { filter: invert(1); }
 .dd-chk{width:16px;height:16px;border:2px solid var(--line-3);border-radius:4px;flex-shrink:0;transition:all .15s;background:transparent}
 .dd-chk.checked{background:var(--emerald-text);border-color:var(--emerald-text);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 6L9 17l-5-5' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");background-size:12px;background-repeat:no-repeat;background-position:center}
 .btn-add-sel{justify-content:center;margin-bottom:6px;border-radius:var(--r-md);animation:cin .18s ease}
+
+  /* Actions collapsed on mobile */
+  .npcard-acts-wrap{overflow:hidden;transition:max-height .25s ease, opacity .2s ease}
+  .npcard-acts-wrap.collapsed{max-height:0;opacity:0;pointer-events:none}
+  .npcard-acts-wrap.expanded{max-height:80px;opacity:1}
+  .npcard-tap-hint{font-size:10px;color:var(--text-3);text-align:right;padding:2px 0 0;display:none}
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -3033,12 +3039,13 @@ function buildCard(it,delay){
   
   const ovClass=isOv?' npcard-over':'';
   const doneClass=it.done?' npcard-done':'';
+  const actsId=`acts-${it.id}`;
   
   const avatarHtml=clientAvatar(it.name,36);
   const matchedCli=clients.find(cl=>cl.name===it.name||(it.phone&&cl.phone===it.phone));
   const codeBadgeCard=matchedCli&&matchedCli.code?`<span class="npcard-code">#${String(matchedCli.code).padStart(3,"0")}</span>`:"";
   const isNew=!_seenCards.has(it.id);_seenCards.add(it.id);const animClass=isNew?'':'no-anim';const animStyle=isNew?`animation-delay:${delay}ms`:'';const chkHtml=`<span class="card-chk${_selectedItems.has(it.id)?' on':''}" onclick="event.stopPropagation();toggleSelect(${it.id})"></span>`;const selCls=_selectedItems.has(it.id)?' selected':'';return `<div class="npcard ${animClass}${ovClass}${doneClass}${selCls}" data-id="${it.id}" style="${animStyle}">
-    <div class="npcard-head">
+    <div class="npcard-head" onclick="event.stopPropagation();const _w=document.getElementById('acts-${it.id}');if(_w){_w.classList.toggle('expanded');_w.classList.toggle('collapsed')}" style="cursor:pointer">
       ${chkHtml}
       <div class="npcard-avatar-wrap">${avatarHtml}</div>
       <div class="npcard-head-main">
@@ -3055,7 +3062,7 @@ function buildCard(it,delay){
     </div>
     <div class="npcard-prods">${prodsHtml}</div>
     ${note}
-    <div class="npcard-acts">${acts}</div>
+    <div class="npcard-acts-wrap ${isOv||it.done?"expanded":"collapsed"}" id="${actsId}"><div class="npcard-acts">${acts}</div></div>
   </div>`;
 }
 
@@ -3599,7 +3606,7 @@ function resolveCQ(k){
   // Then open the message modal
   const type=hay.length&&nohay.length?'mix':hay.length?'hay':'nohay';
   if(hay.length||nohay.length){
-    showMsg(c.name,c.phone||'',type,hay,nohay,alts,null,true);
+    sendMsgDirect(c.name,c.phone||'',type,hay,nohay,alts);
   }
 }
 
@@ -3684,6 +3691,30 @@ function sendWA(){
   closeMov();
   if(msgCtx.onSend) msgCtx.onSend();
 }
+function sendMsgDirect(name,phone,type,hay,nohay,alts){
+  // Build message directly without modal
+  let tmpl;
+  if(type==='hay') tmpl=localStorage.getItem('tmpl-cq-hay')||DEF_TMPL_CQ_HAY;
+  else if(type==='nohay') tmpl=localStorage.getItem('tmpl-cq-nohay')||DEF_TMPL_CQ_NOHAY;
+  else tmpl=localStorage.getItem('tmpl-cq-mix')||DEF_TMPL_CQ_MIX;
+  const hayStr=fmtList(hay||[],p=>p.sn?`*${p.name}* (${p.sn})`:`*${p.name}*`);
+  const nohayStr=fmtList(nohay||[],p=>`*${p.name}*`);
+  let altsStr='';
+  if(alts&&alts.length){
+    const altList=fmtList(alts,a=>a.qty?`*${a.name}* – ${a.qty}`:(`*${a.name}*`));
+    altsStr=altList;
+  }
+  // Find client nick
+  const matchCli=clients.find(c=>c.name===name||(phone&&c.phone===phone));
+  const msgName=matchCli?.nick?.trim()||name;
+  let msg=tmpl
+    .replace(/\{nombre\}/gi,msgName)
+    .replace(/\{hay\}/gi,hayStr)
+    .replace(/\{nohay\}/gi,nohayStr)
+    .replace(/\{alternativas\}/gi,altsStr);
+  const num=phone?(phone.replace(/\D/g,'')||''):'';
+  window.open(num?`https://wa.me/54${num}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
+}
 function closeMov(){$('ov-msg').classList.remove('on');}
 
 function openForm(type){
@@ -3750,7 +3781,7 @@ function cliSearch(){
   }).slice(0,6);
   if(!matches.length){dd.classList.remove('on');return;}
   results.innerHTML=matches.map(c=>{
-    const code=c.code?`<span class="cli-code-sm">#${String(c.code).padStart(3,'0')}</span>`:'';
+    const code=c.code?`<span class="cli-code-sm" style="flex-shrink:0;white-space:nowrap">#${String(c.code).padStart(3,'0')}</span>`:'';
     return `<div class="dd-item" onclick="selCli('${jesc(c.name)}','${jesc(c.phone||'')}')"><span style="display:inline-flex;margin-right:8px;vertical-align:middle">${clientAvatar(c.name,24)}</span>${code}${esc(c.name)}${c.phone?`<span class="dd-item-meta">${esc(c.phone)}</span>`:''}</div>`;
   }).join('');
   dd.classList.add('on');
