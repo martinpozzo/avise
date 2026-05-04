@@ -795,7 +795,7 @@ select option{background:var(--surface-1);color:var(--text-1)}
 .search-wrap{position:relative;margin-bottom:6px}
 .search-wrap input{width:100%;padding:11px 14px;border:1px solid var(--line-2);border-radius:var(--r-md);font-size:14px;color:var(--text-0);background:var(--surface-2);outline:none;transition:all .15s;-webkit-appearance:none}
 .search-wrap input:focus{border-color:var(--cyan-border);background:var(--surface-3)}
-.search-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface-2);border:1px solid var(--line-3);border-radius:var(--r-md);box-shadow:var(--shadow-lg);z-index:10;overflow-y:auto;max-height:220px;display:none;overflow:hidden}
+.search-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface-2);border:1px solid var(--line-3);border-radius:var(--r-md);box-shadow:var(--shadow-lg);z-index:10;overflow-y:auto;max-height:240px;display:none}
 .search-dd.on{display:block;animation:slideUp .14s var(--ease-smooth)}
 .dd-filter{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line-1);background:var(--surface-3);cursor:pointer;user-select:none}
 .dd-filter label{font-size:12px;color:var(--text-1);cursor:pointer;font-weight:500;flex:1;user-select:none}
@@ -3799,7 +3799,7 @@ function prodSearch(){
   const q=$('f-prod-inp').value;
   const resultsEl=$('dd-results');
   const dd=$('prod-dd');
-  if(!q.trim()){dd.classList.remove('on');resultsEl.innerHTML='';_prodSel.clear();_updProdSelBtn();return;}
+  if(!q.trim()){dd.classList.remove('on');resultsEl.innerHTML='';_prodSel.clear();_updProdSelBtn();document.querySelector('.search-wrap').style.marginBottom='';return;}
   const m=products.filter(p=>(showInactive||p.active!==false)&&fuzzy(q,p.name));
   ddIdx=-1;
   const isNew=!products.find(p=>p.name.toLowerCase()===q.toLowerCase());
@@ -3814,6 +3814,9 @@ function prodSearch(){
   if(isNew) h+=`<div class="dd-item dim" onclick="selProd('${jesc(q)}',true)">${ICO.PLUS} Agregar "${esc(q)}"</div>`;
   resultsEl.innerHTML=h;
   dd.classList.add('on');
+  // Push content below dropdown down so buttons aren't covered
+  const ddH=dd.scrollHeight||220;
+  document.querySelector('.search-wrap').style.marginBottom=ddH+'px';
   _updProdSelBtn();
 }
 function _togProdSel(name,el){
@@ -3838,6 +3841,7 @@ function _confirmProdSel(){
   $('f-prod-inp').value='';
   $('prod-dd').classList.remove('on');
   $('dd-results').innerHTML='';
+  document.querySelector('.search-wrap').style.marginBottom='';
   _updProdSelBtn();
 }
 function selProd(name,isNew){
