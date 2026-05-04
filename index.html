@@ -1111,11 +1111,12 @@ details[open] .trash-chevron{transform:rotate(180deg)}
 
   /* Arrived row */
   
-  .np-act-icon{min-width:32px;min-height:34px;border-radius:9px;width:32px;flex:0 0 32px}
 
   /* Card actions */
-  .npcard-acts{gap:5px;padding-top:8px;flex-wrap:wrap}
-  .np-act{min-height:34px;padding:6px 8px;font-size:11.5px;border-radius:9px;gap:4px;flex:1;min-width:0;justify-content:center}
+  .npcard-acts{display:grid;grid-template-columns:1fr 1fr auto auto;gap:5px;padding-top:8px;align-items:center}
+  .np-act{min-height:34px;padding:6px 4px;font-size:11px;border-radius:9px;gap:3px;width:100%;justify-content:center;letter-spacing:0}
+  .np-act-icon{width:32px;min-height:34px;border-radius:9px;flex:none;padding:0}
+  .np-act-neutral{grid-column:1 / span 2}
 
   /* Reschedule panel */
   .rpanel{padding:11px 12px;border-radius:11px;margin-top:9px;gap:9px}
