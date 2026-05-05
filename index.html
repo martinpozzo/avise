@@ -1901,6 +1901,7 @@ body.light #logo-img { filter: invert(1); }
       <div class="search-wrap">
         <input class="inp" id="f-prod-inp" type="text" placeholder="Buscá o escribí un producto..." autocomplete="off" oninput="prodSearch()" onkeydown="prodKey(event)"/>
         <div class="search-dd" id="prod-dd">
+          <button id="dd-sel-footer" onclick="_confirmProdSel()" style="display:none;width:calc(100% - 16px);margin:8px 8px 4px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);cursor:pointer;text-align:center">✓ <span id="dd-sel-label">Agregar</span></button>
           <div class="dd-filter" onclick="event.stopPropagation();togInactive()">
             <div class="dd-checkbox" id="chk-inactive"></div>
             <label>Mostrar inactivos</label>
@@ -1908,7 +1909,7 @@ body.light #logo-img { filter: invert(1); }
           <div class="dd-results" id="dd-results"></div>
         </div>
       </div>
-      <button id="dd-sel-footer" onclick="_confirmProdSel()" style="display:none;width:100%;margin-top:6px;padding:10px;border-radius:var(--r-md);font-size:13px;font-weight:700;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);cursor:pointer;animation:cin .15s ease">✓ <span id="dd-sel-label">Agregar</span></button>
+
       <button class="btn-add-prod" onclick="addFormProd()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Agregar producto</button>
     </div>
     <div class="fld"><label class="lbl">Nota interna</label><textarea class="txt" id="f-note" placeholder="Quiere 3 cajas..."></textarea></div>
