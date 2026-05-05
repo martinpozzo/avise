@@ -1891,13 +1891,13 @@ body.light #logo-img { filter: invert(1); }
       <div class="fld">
         <label class="lbl">Cliente</label>
         <div class="search-wrap">
-          <input class="inp" id="f-name" placeholder="Buscar o escribir cliente..." autocomplete="off" oninput="cliSearch()" onfocus="cliSearch()" onblur="setTimeout(()=>$('cli-dd').classList.remove('on'),200)"/>
+          <input class="inp" id="f-name" placeholder="Buscar o escribir cliente..." autocomplete="off" oninput="cliSearch()" onfocus="cliSearch()" onkeydown="cliKey(event)" onblur="setTimeout(()=>$('cli-dd').classList.remove('on'),200)"/>
           <div class="search-dd" id="cli-dd"><div class="dd-results" id="cli-results"></div></div>
         </div>
       </div>
       <div class="fld">
         <label class="lbl">WhatsApp</label>
-        <input class="inp" id="f-phone" type="tel" placeholder="1134567890"/>
+        <input class="inp" id="f-phone" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$('f-prod-inp')?.focus();}" type="tel" placeholder="1134567890"/>
       </div>
     </div>
     <div class="fld">
@@ -3781,7 +3781,45 @@ function setFPNote(i,val){if(formProds[i])formProds[i].note=val;}
 function rmFP(i){formProds.splice(i,1);renderFormProds();}
 
 // Client search in form
+let _cliIdx=-1;
+function cliKey(e){
+  const dd=$('cli-dd');
+  const opts=Array.from($('cli-results').querySelectorAll('.dd-item'));
+  if(!opts.length||!dd.classList.contains('on')){
+    if(e.key==='Enter'){
+      // No dropdown options: Tab/Enter just moves on (let default Tab happen)
+      // If on Enter with no matches, focus next field (phone)
+      e.preventDefault();
+      $('f-phone')?.focus();
+    }
+    return;
+  }
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    _cliIdx=Math.min(_cliIdx+1,opts.length-1);
+    opts.forEach((o,i)=>o.classList.toggle('hi',i===_cliIdx));
+    if(opts[_cliIdx]) opts[_cliIdx].scrollIntoView({block:'nearest'});
+  }
+  else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    _cliIdx=Math.max(_cliIdx-1,0);
+    opts.forEach((o,i)=>o.classList.toggle('hi',i===_cliIdx));
+    if(opts[_cliIdx]) opts[_cliIdx].scrollIntoView({block:'nearest'});
+  }
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    if(_cliIdx>=0&&opts[_cliIdx]) opts[_cliIdx].click();
+    else if(opts[0]) opts[0].click();
+    // After selecting, focus the products input
+    setTimeout(()=>$('f-prod-inp')?.focus(),50);
+  }
+  else if(e.key==='Escape'){
+    dd.classList.remove('on');
+    _cliIdx=-1;
+  }
+}
 function cliSearch(){
+  _cliIdx=-1;
   const q=$('f-name').value;
   const dd=$('cli-dd');
   const results=$('cli-results');
@@ -3870,10 +3908,42 @@ function selProd(name,isNew){
 function prodKey(e){
   const dd=$('prod-dd');
   const opts=Array.from($('dd-results').querySelectorAll('.dd-item'));
-  if(e.key==='ArrowDown'){e.preventDefault();ddIdx=Math.min(ddIdx+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('hi',i===ddIdx));}
-  else if(e.key==='ArrowUp'){e.preventDefault();ddIdx=Math.max(ddIdx-1,-1);opts.forEach((o,i)=>o.classList.toggle('hi',i===ddIdx));}
-  else if(e.key==='Enter'){e.preventDefault();if(ddIdx>=0&&opts[ddIdx])opts[ddIdx].click();else addFormProd();}
-  else if(e.key==='Escape')dd.classList.remove('on');
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    ddIdx=Math.min(ddIdx+1,opts.length-1);
+    opts.forEach((o,i)=>o.classList.toggle('hi',i===ddIdx));
+    if(opts[ddIdx]) opts[ddIdx].scrollIntoView({block:'nearest'});
+  }
+  else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    ddIdx=Math.max(ddIdx-1,0);
+    opts.forEach((o,i)=>o.classList.toggle('hi',i===ddIdx));
+    if(opts[ddIdx]) opts[ddIdx].scrollIntoView({block:'nearest'});
+  }
+  else if(e.key===' '||e.code==='Space'){
+    // Space: toggle current item in multi-select
+    if(ddIdx>=0&&opts[ddIdx]&&opts[ddIdx].classList.contains('dd-item-chk')){
+      e.preventDefault();
+      opts[ddIdx].click();
+    }
+  }
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    if(_prodSel.size>0){
+      // Confirm multi-selection
+      _confirmProdSel();
+    } else if(ddIdx>=0&&opts[ddIdx]){
+      // Toggle the highlighted item, or add as new
+      opts[ddIdx].click();
+    } else {
+      addFormProd();
+    }
+  }
+  else if(e.key==='Escape'){
+    dd.classList.remove('on');
+    _prodSel.clear();
+    _updProdSelBtn();
+  }
 }
 function addFormProd(){
   const name=$('f-prod-inp').value.trim();
@@ -4443,7 +4513,23 @@ document.addEventListener('click',e=>{
   if(!e.target.closest('.search-wrap')&&!e.target.closest('#prod-dd')) $('prod-dd')?.classList.remove('on');
 });
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeForm();closeSettings();closeMov();closeProds();closeHist();closeClients();}
+  // Escape: close any open modal
+  if(e.key==='Escape'){closeForm();closeSettings();closeMov();closeProds();closeHist();closeClients();return;}
+  // Skip global shortcuts if user is typing in input/textarea/contenteditable
+  const t=e.target;
+  const isTyping=t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable);
+  if(isTyping) return;
+  // Skip if a modal is open (only fab shortcuts work outside modals)
+  const modalOpen=document.querySelector('.ov.on');
+  if(modalOpen) return;
+  // Skip with modifier keys
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  // N: Nuevo aviso (pendiente)
+  if(e.key==='n'||e.key==='N'){e.preventDefault();openForm('item');return;}
+  // C: Nueva consulta de stock
+  if(e.key==='c'||e.key==='C'){e.preventDefault();openForm('cq');return;}
+  // /: Focus search bar
+  if(e.key==='/'){e.preventDefault();$('search')?.focus();return;}
 });
 
 init();
