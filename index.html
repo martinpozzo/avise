@@ -2376,13 +2376,8 @@ function updCQ(k,data){
   // Update only the specific CQ card if it exists in DOM
   const cardEl=document.querySelector(`#c-cq [data-cqk="${k}"]`);
   if(cardEl&&!data.resolved&&!data.dismissed){
-    const newHtml=buildCQCard(c);
-    if(newHtml){
-      const tmp=document.createElement('div');
-      tmp.innerHTML=newHtml;
-      const newCard=tmp.firstElementChild;
-      if(newCard){newCard.style.animation='none';cardEl.replaceWith(newCard);}
-    }
+    _replaceCQCard(k);
+    return;
   } else if(cardEl&&(data.resolved||data.dismissed)){
     // Resolved/dismissed: animate out
     cardEl.style.transition='opacity .35s ease, transform .35s ease, max-height .45s ease, margin .45s ease';
@@ -3512,7 +3507,7 @@ function buildCQCard(c){
   } else {
     foot=`<span class="cq-foot-lbl">Marcá cada producto...</span><button class="btn-discard" onclick="rmCQ('${ke}')">Cancelar</button>`;
   }
-  return `<div class="cq-card"><div class="cq-head"><div><div class="cqh-name">${esc(c.name)}</div><div class="cqh-phone">${esc(c.phone||'Sin número')}</div></div><div class="cqh-meta"><div class="cqh-age">${ag<1?'ahora':ag+'m'}</div><button class="btn-edit-cq" onclick="editCQ('${ke}')">${ICO.EDIT} Editar</button></div></div><div class="cq-body">${prodRows}</div><div class="cq-foot">${foot}</div></div>`;
+  return `<div class="cq-card" data-cqk="${ke}"><div class="cq-head"><div><div class="cqh-name">${esc(c.name)}</div><div class="cqh-phone">${esc(c.phone||'Sin número')}</div></div><div class="cqh-meta"><div class="cqh-age">${ag<1?'ahora':ag+'m'}</div><button class="btn-edit-cq" onclick="editCQ('${ke}')">${ICO.EDIT} Editar</button></div></div><div class="cq-body">${prodRows}</div><div class="cq-foot">${foot}</div></div>`;
 }
 
 function setStatus(k,idx,status){
