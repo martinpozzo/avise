@@ -3425,6 +3425,20 @@ function sendFromBar(k){
 }
 function dismissBar(k){updCQ(k,{dismissed:true});}
 
+function _replaceCQCard(k){
+  const cq=consultas.find(x=>x.k===k);
+  const oldCard=document.querySelector(`#cq-list [data-cqk="${k}"]`);
+  if(!cq||!oldCard) return;
+  const newHtml=buildCQCard(cq);
+  const tmp=document.createElement('div');
+  tmp.innerHTML=newHtml;
+  const newCard=tmp.firstElementChild;
+  if(!newCard) return;
+  // Silent in-place swap, no animation = no flash
+  newCard.style.animation='none';
+  oldCard.replaceWith(newCard);
+}
+
 function renderCQ(){
   const el=$('cq-list');
   const active=consultas.filter(c=>!c.resolved&&!c.dismissed);
