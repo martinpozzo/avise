@@ -2374,7 +2374,7 @@ function updCQ(k,data){
   Object.assign(c,data);saveCQ();
   if(fbRef&&!k.startsWith('L')) fbRef.child('cq/'+k).update(data);
   // Update only the specific CQ card if it exists in DOM
-  const cardEl=document.querySelector(`#c-cq [data-cqk="${k}"]`);
+  const cardEl=document.querySelector(`#cq-list [data-cqk="${k}"]`);
   if(cardEl&&!data.resolved&&!data.dismissed){
     _replaceCQCard(k);
     return;
