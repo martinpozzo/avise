@@ -1901,7 +1901,7 @@ body.light #logo-img { filter: invert(1); }
       <div class="search-wrap">
         <input class="inp" id="f-prod-inp" type="text" placeholder="Buscá o escribí un producto..." autocomplete="off" oninput="prodSearch()" onkeydown="prodKey(event)"/>
         <div class="search-dd" id="prod-dd">
-          <button id="dd-sel-footer" onclick="_confirmProdSel()" style="display:none;width:calc(100% - 16px);margin:8px 8px 4px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);cursor:pointer;text-align:center">✓ <span id="dd-sel-label">Agregar</span></button>
+          <button id="dd-sel-footer" onclick="_confirmProdSel()" style="width:calc(100% - 16px);margin:8px 8px 4px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--emerald-soft);color:var(--emerald-text);border:1px solid var(--emerald-border);cursor:pointer;text-align:center">✓ <span id="dd-sel-label">Agregar</span></button>
           <div class="dd-filter" onclick="event.stopPropagation();togInactive()">
             <div class="dd-checkbox" id="chk-inactive"></div>
             <label>Mostrar inactivos</label>
@@ -3827,10 +3827,13 @@ function _updProdSelBtn(){
   const label=$('dd-sel-label');
   if(!footer) return;
   if(_prodSel.size>0){
-    footer.style.display='block';
+    footer.style.opacity='1';
+    footer.style.pointerEvents='auto';
     if(label) label.textContent=`Agregar ${_prodSel.size} producto${_prodSel.size>1?'s':''}`;
   } else {
-    footer.style.display='none';
+    footer.style.opacity='.4';
+    footer.style.pointerEvents='none';
+    if(label) label.textContent='Seleccioná productos';
   }
 }
 function _confirmProdSel(){
