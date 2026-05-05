@@ -3473,8 +3473,7 @@ function buildCQCard(c){
       }).join('');
       const pi2=gp(p.name);
       const sameSub=pi2?.s&&pi2?.c?products.filter(x=>x.active!==false&&!fuzzy(p.name,x.name)&&gp(x.name)?.s===pi2.s&&gp(x.name)?.c===pi2.c):[];
-      const sameCat=pi2?.c?products.filter(x=>x.active!==false&&!fuzzy(p.name,x.name)&&gp(x.name)?.c===pi2.c&&!sameSub.find(s=>s.name===x.name)):[];
-      const allProds=[...sameSub,...sameCat,...products.filter(x=>x.active!==false&&!fuzzy(p.name,x.name)&&!sameSub.find(s=>s.name===x.name)&&!sameCat.find(s=>s.name===x.name))];
+      const allProds=sameSub;
       const hayQtyBlock=hayAlts.length?'<div class="qty-block">'+hayAlts.map(a=>{
         const an=typeof a==='string'?a:a.name;const aq=typeof a==='string'?'':a.qty||'';
         return `<div class="qty-item"><span class="qty-name">${esc(an)}</span><input class="qty-inp" type="text" placeholder="¿Cuánto?" value="${esc(aq)}" onchange="setHayAltQty('${ke}',${i},'${jesc(an)}',this.value)"/></div>`;
