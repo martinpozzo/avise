@@ -3152,8 +3152,8 @@ function markArrivedFancy(id,idx,btnEl){
   svg.appendChild(rect);
   siBtn.style.position='relative';
   siBtn.appendChild(svg);
-  // Hide native border + bg
-  siBtn.style.transition='border-color .15s ease, background-color .35s ease';
+  // Hide native border + bg simultaneously with SVG erase
+  siBtn.style.transition='border-color .45s cubic-bezier(.65,0,.35,1), background-color .45s cubic-bezier(.65,0,.35,1)';
   siBtn.style.borderColor='transparent';
   siBtn.style.backgroundColor='transparent';
   // Fade inner content (text + check icon)
