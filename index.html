@@ -3088,7 +3088,18 @@ function buildCard(it,delay){
   </div>`;
 }
 
-function togRp(id,e){e.stopPropagation();$(id)?.classList.toggle('on');}
+function togRp(id,e){
+  e.stopPropagation();
+  const el=$(id);
+  if(!el) return;
+  if(el.classList.contains('on')){
+    el.style.animation='revealUp .15s ease forwards';
+    setTimeout(()=>{el.classList.remove('on');el.style.animation='';},140);
+  } else {
+    el.classList.add('on');
+    el.style.animation='revealDown .18s ease';
+  }
+}
 function rpQD(id,idx,el){
   el.closest('.rp-dates').querySelectorAll('.rqd').forEach(b=>b.classList.toggle('on',b===el));
   const inp=$(`rd-${id}-${idx}`);
@@ -3467,9 +3478,17 @@ function _replaceCQCard(k){
   const newRows=Array.from(newCard.querySelectorAll('.cq-prod-row'));
   const changedIdxs=[];
   newRows.forEach((n,i)=>{if(!oldRows[i]||oldRows[i].innerHTML!==n.innerHTML) changedIdxs.push(i);});
-  // Silent swap
-  newCard.style.animation='none';
-  oldCard.replaceWith(newCard);
+  // Find panels being hidden (were .on, now won't be .on)
+  const oldPanels=Array.from(oldCard.querySelectorAll('.alts-panel.on'));
+  const newPanels=new Set(Array.from(newCard.querySelectorAll('.alts-panel.on')).map(p=>p.closest('[data-pi]')?.dataset.pi));
+  const hiding=oldPanels.filter(p=>!newPanels.has(p.closest('[data-pi]')?.dataset.pi));
+  if(hiding.length>0){
+    hiding.forEach(p=>{p.style.animation='revealUp .15s ease forwards';});
+    setTimeout(()=>{newCard.style.animation='none';oldCard.replaceWith(newCard);},140);
+  } else {
+    newCard.style.animation='none';
+    oldCard.replaceWith(newCard);
+  }
   // Animate only the changed rows' inner panels
   if(changedIdxs.length>0){
     changedIdxs.forEach(i=>{
