@@ -3019,7 +3019,7 @@ function buildCard(it,delay){
     if(p.arrived&&!it.done){
       prodsHtml+=`<div class="npitem-act" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">${ICO.CHECK} Ingresó</span><button class="np-btn np-btn-ghost" onclick="unmarkArrived(${it.id},${i})">${ICO.REFRESH}</button></div>`;
     } else if(showActions){
-      prodsHtml+=`<div class="npitem-act" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">¿Ingresó?</span><button class="np-btn np-btn-go" onclick="markArrived(${it.id},${i})">${ICO.CHECK} Sí</button><button class="np-btn np-btn-ghost" onclick="togRp('${rpId}',event)">No</button></div>`;
+      prodsHtml+=`<div class="npitem-act" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">¿Ingresó?</span><button class="np-btn np-btn-go" onclick="markArrivedFancy(${it.id},${i},this)">${ICO.CHECK} Sí</button><button class="np-btn np-btn-ghost" onclick="togRp('${rpId}',event)">No</button></div>`;
       prodsHtml+=`<div class="rpanel" id="${rpId}"><div class="rp-dates">`;
       if(p.exp&&p.exp!=='indef'&&!isArrival(p.exp)){
         prodsHtml+=`<button class="rqd" onclick="rpKeep(${it.id},${i},this)">${ICO.CHECK} Mantener (${fd(p.exp)})</button>`;
@@ -3140,6 +3140,73 @@ function togAct(id){
     setTimeout(()=>{el.style.display='none';el.style.opacity='';el.style.transition='';},150);
   }
 }
+function markArrivedFancy(id,idx,btnEl){
+  const act=btnEl.closest('.npitem-act');
+  if(!act){markArrived(id,idx);return;}
+  const siBtn=act.querySelector('.np-btn-go');
+  const noBtn=act.querySelector('.np-btn-ghost');
+  if(!siBtn||!noBtn){markArrived(id,idx);return;}
+
+  // Lock buttons during animation
+  siBtn.style.pointerEvents='none';
+  noBtn.style.pointerEvents='none';
+
+  // === Sí: SVG border erase ===
+  const w=siBtn.offsetWidth, h=siBtn.offsetHeight;
+  const svgNS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(svgNS,'svg');
+  svg.setAttribute('preserveAspectRatio','none');
+  svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  svg.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:visible';
+  const rect=document.createElementNS(svgNS,'rect');
+  rect.setAttribute('x','1');rect.setAttribute('y','1');
+  rect.setAttribute('width',w-2);rect.setAttribute('height',h-2);
+  rect.setAttribute('rx','8');
+  rect.setAttribute('fill','none');
+  rect.setAttribute('stroke','rgb(16,185,129)');
+  rect.setAttribute('stroke-width','2');
+  rect.setAttribute('stroke-linecap','round');
+  const len=2*(w+h);
+  rect.style.strokeDasharray=len+'px';
+  rect.style.strokeDashoffset='0';
+  rect.style.transition='stroke-dashoffset .45s cubic-bezier(.65,0,.35,1)';
+  svg.appendChild(rect);
+  siBtn.style.position='relative';
+  siBtn.appendChild(svg);
+  // Hide native border + bg
+  siBtn.style.transition='border-color .15s ease, background-color .35s ease';
+  siBtn.style.borderColor='transparent';
+  siBtn.style.backgroundColor='transparent';
+  // Fade inner content (text + check icon)
+  Array.from(siBtn.childNodes).forEach(n=>{
+    if(n!==svg&&n.nodeType===1){
+      n.style.transition='opacity .25s ease';
+      n.style.opacity='0';
+    } else if(n!==svg&&n.nodeType===3){
+      // Text node - wrap in span so we can fade it
+      const sp=document.createElement('span');
+      sp.textContent=n.textContent;
+      sp.style.transition='opacity .25s ease';
+      sp.style.opacity='0';
+      n.parentNode.replaceChild(sp,n);
+    }
+  });
+  requestAnimationFrame(()=>{rect.style.strokeDashoffset=len+'px';});
+
+  // === No: morph "No" text → refresh icon ===
+  noBtn.style.transition='transform .35s cubic-bezier(.65,0,.35,1), opacity .2s ease';
+  noBtn.style.opacity='0';
+  noBtn.style.transform='rotate(-180deg) scale(.6)';
+  setTimeout(()=>{
+    noBtn.innerHTML=ICO.REFRESH;
+    noBtn.style.opacity='1';
+    noBtn.style.transform='rotate(0deg) scale(1)';
+  },200);
+
+  // After animations: actual mark
+  setTimeout(()=>markArrived(id,idx),500);
+}
+
 function markArrived(id,idx){
   const it=items.find(i=>i.id===id);if(!it||!it.products[idx])return;
   it.products[idx].arrived=true;
