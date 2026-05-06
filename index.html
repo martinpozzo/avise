@@ -3752,7 +3752,7 @@ function openForm(type){
   $('ov-form').classList.add('on');
   setTimeout(()=>$('f-name').focus(),300);
 }
-function closeForm(){$('ov-form').classList.remove('on');formId=null;}
+function closeForm(){$('ov-form').classList.remove('on');formId=null;document.activeElement?.blur();}
 
 function renderFormProds(){
   const el=$('fprod-list');
@@ -4528,8 +4528,17 @@ document.addEventListener('keydown',e=>{
   if(e.key==='n'||e.key==='N'){e.preventDefault();openForm('item');return;}
   // C: Nueva consulta de stock
   if(e.key==='c'||e.key==='C'){e.preventDefault();openForm('cq');return;}
-  // /: Focus search bar
-  if(e.key==='/'){e.preventDefault();$('search')?.focus();return;}
+  // T: Focus search bar
+  if(e.key==='t'||e.key==='T'){e.preventDefault();$('search')?.focus();return;}
+  // Ctrl+Enter or Ctrl+G: Guardar form (works even when typing)
+});
+
+// Separate listener for Ctrl+Enter to save form (works inside inputs)
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){
+    const formOpen=$('ov-form')?.classList.contains('on');
+    if(formOpen){e.preventDefault();saveForm();return;}
+  }
 });
 
 init();
