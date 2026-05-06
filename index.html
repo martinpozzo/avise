@@ -3526,9 +3526,16 @@ function buildCQCard(c){
 
 function setStatus(k,idx,status){
   const c=consultas.find(x=>x.k===k);if(!c)return;
-  c.products[idx].status=status;
-  if(status==='hay') c.products[idx].alts=[];
-  if(status==='nohay') c.products[idx].sn='';
+  // Toggle: clicking same status again → back to pending
+  if(c.products[idx].status===status){
+    c.products[idx].status='pending';
+    c.products[idx].alts=[];
+    c.products[idx].sn='';
+  } else {
+    c.products[idx].status=status;
+    if(status==='hay') c.products[idx].alts=[];
+    if(status==='nohay') c.products[idx].sn='';
+  }
   updCQ(k,{products:c.products});
 }
 function setProdNote(k,idx,val){const c=consultas.find(x=>x.k===k);if(!c)return;c.products[idx].note=val;updCQ(k,{products:c.products});}
