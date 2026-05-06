@@ -2936,6 +2936,10 @@ function _replaceCard(id){
 
   // Helper: animate one element out then swap with new and animate in
   const swapEl=(o,n,glow)=>{
+    if(_silentSwap.has(id)){
+      try{n.style.animation='none';o.replaceWith(n);}catch(e){}
+      return;
+    }
     o.classList.add('morph-out');
     setTimeout(()=>{
       try{
@@ -3204,7 +3208,7 @@ function markArrivedFancy(id,idx,btnEl){
   },200);
 
   // After animations: actual mark
-  setTimeout(()=>markArrived(id,idx),500);
+  setTimeout(()=>{_silentSwap.add(id);markArrived(id,idx);setTimeout(()=>_silentSwap.delete(id),600);},500);
 }
 
 function markArrived(id,idx){
@@ -3975,6 +3979,7 @@ function selCli(name,phone){
 // Product search
 let showInactive=false;
 function togInactive(){showInactive=!showInactive;$('chk-inactive').classList.toggle('on',showInactive);prodSearch();}
+const _silentSwap=new Set();
 let _prodSel=new Set();
 function prodSearch(){
   const q=$('f-prod-inp').value;
