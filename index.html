@@ -2916,7 +2916,21 @@ function _replaceCard(id){
 
   // Helper: animate one element out then swap with new and animate in
   const swapEl=(o,n)=>{
-    try{n.style.animation='none';o.replaceWith(n);}catch(e){}
+    try{
+      n.style.animation='none';
+      n.style.borderColor='transparent';
+      o.replaceWith(n);
+      // Re-init SVG border silently (no animation, just restore CSS border)
+      const nr=n.querySelector('.npcard-svg-rect');
+      if(nr){
+        const w=n.offsetWidth,h=n.offsetHeight,r2=13;
+        nr.setAttribute('x','1');nr.setAttribute('y','1');
+        nr.setAttribute('width',w-2);nr.setAttribute('height',h-2);
+        nr.setAttribute('stroke',_getBorderColor(n));
+        nr.style.opacity='0';
+        n.style.removeProperty('border-color');
+      }
+    }catch(e){}
   };
 
   // Helper: silently sync attributes (className, onclick, etc) without animation
@@ -3040,7 +3054,7 @@ function buildCard(it,delay){
   const avatarHtml=clientAvatar(it.name,36);
   const matchedCli=clients.find(cl=>cl.name===it.name||(it.phone&&cl.phone===it.phone));
   const codeBadgeCard=matchedCli&&matchedCli.code?`<span class="npcard-code">#${String(matchedCli.code).padStart(3,"0")}</span>`:"";
-  const isNew=!_seenCards.has(it.id);_seenCards.add(it.id);const animClass=isNew?'':'no-anim';const animStyle=isNew?`animation-delay:${delay}ms`:'';const chkHtml=`<span class="card-chk${_selectedItems.has(it.id)?' on':''}" onclick="event.stopPropagation();toggleSelect(${it.id})"></span>`;const selCls=_selectedItems.has(it.id)?' selected':'';return `<div class="npcard ${animClass}${ovClass}${doneClass}${selCls}" data-id="${it.id}" style="${animStyle}">
+  const isNew=!_seenCards.has(it.id);_seenCards.add(it.id);const animClass=isNew?'':'no-anim';const animStyle=isNew?`animation-delay:${delay}ms`:'';const chkHtml=`<span class="card-chk${_selectedItems.has(it.id)?' on':''}" onclick="event.stopPropagation();toggleSelect(${it.id})"></span>`;const selCls=_selectedItems.has(it.id)?' selected':'';return `<div class="npcard ${animClass}${ovClass}${doneClass}${selCls}" data-id="${it.id}" style="${animStyle};border-color:transparent"><svg class="npcard-svg" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;pointer-events:none;overflow:visible;width:100%;height:100%;z-index:0"><rect class="npcard-svg-rect" fill="none" stroke-width="1.5" rx="13"/></svg>
     <div class="npcard-head" onclick="event.stopPropagation();const _w=document.getElementById('acts-${it.id}');if(_w){_w.classList.toggle('expanded');_w.classList.toggle('collapsed')}" style="cursor:pointer">
       ${chkHtml}
       <div class="npcard-avatar-wrap">${avatarHtml}</div>
@@ -3219,6 +3233,43 @@ function sortIt(list){
   return c;
 }
 
+function _getBorderColor(card){
+  if(card.classList.contains('npcard-done')) return 'var(--line-1)';
+  if(card.classList.contains('npcard-over')) return 'var(--emerald-border)';
+  return 'var(--line-2)';
+}
+
+function initCardSVGBorders(container, animate){
+  requestAnimationFrame(()=>{
+    const cards=container.querySelectorAll('.npcard[data-id]');
+    cards.forEach(card=>{
+      const svg=card.querySelector('.npcard-svg');
+      const rect=svg?.querySelector('.npcard-svg-rect');
+      if(!svg||!rect||svg.dataset.init) return;
+      svg.dataset.init='1';
+      const w=card.offsetWidth, h=card.offsetHeight, r=13;
+      rect.setAttribute('x','1'); rect.setAttribute('y','1');
+      rect.setAttribute('width',w-2); rect.setAttribute('height',h-2);
+      rect.setAttribute('stroke',_getBorderColor(card));
+      const perim=2*(w+h-4)+(2*Math.PI*r-8*r);
+      if(animate){
+        rect.style.strokeDasharray=perim;
+        rect.style.strokeDashoffset=perim;
+        requestAnimationFrame(()=>{
+          rect.style.transition='stroke-dashoffset .45s cubic-bezier(.65,0,.35,1)';
+          rect.style.strokeDashoffset='0';
+        });
+        // After draw-in, hand off to CSS border
+        setTimeout(()=>{
+          rect.style.transition='opacity .2s ease';
+          rect.style.opacity='0';
+          card.style.removeProperty('border-color');
+        },500);
+      }
+    });
+  });
+}
+
 function renderPend(){
   const q=$('s-pend').value;
   const type=$('s-type').value;
@@ -3235,6 +3286,7 @@ function renderPend(){
   }
   h+=rest.map((it,i)=>buildCard(it,(ov.length+i)*18)).join('');
   el.innerHTML=h;
+  initCardSVGBorders(el,true);
   upBadges();
 }
 function renderHist(){
@@ -3434,24 +3486,42 @@ function animOut(id,cb){
   if(!el||el.dataset.removing==='1'){if(cb)cb();return;}
   el.dataset.removing='1';
   _seenCards.delete(id);
-
   el.style.animation='none';
-  // Lock height so collapse happens simultaneously with fade
-  el.style.height=el.offsetHeight+'px';
-  el.style.overflow='hidden';
-  requestAnimationFrame(()=>{
-    el.style.transition='opacity .3s ease, height .35s ease, margin-bottom .35s ease, padding .35s ease';
-    el.style.opacity='0';
-    el.style.height='0';
-    el.style.marginBottom='0';
-    el.style.paddingTop='0';
-    el.style.paddingBottom='0';
-  });
 
+  // SVG border erase
+  const svg=el.querySelector('.npcard-svg');
+  const rect=svg?.querySelector('.npcard-svg-rect');
+  if(rect){
+    const w=el.offsetWidth, h=el.offsetHeight, r=13;
+    rect.setAttribute('width',w-2); rect.setAttribute('height',h-2);
+    rect.setAttribute('stroke',_getBorderColor(el));
+    const perim=2*(w+h-4)+(2*Math.PI*r-8*r);
+    rect.style.strokeDasharray=perim;
+    rect.style.strokeDashoffset='0';
+    rect.style.opacity='1';
+    rect.style.transition='';
+    el.style.borderColor='transparent';
+    requestAnimationFrame(()=>{
+      rect.style.transition='stroke-dashoffset .35s cubic-bezier(.65,0,.35,1)';
+      rect.style.strokeDashoffset=perim;
+    });
+  }
+
+  // Collapse after border erases
+  const delay=rect?370:0;
   setTimeout(()=>{
-    el.remove();
-    if(cb)cb();
-  },380);
+    el.style.height=el.offsetHeight+'px';
+    el.style.overflow='hidden';
+    requestAnimationFrame(()=>{
+      el.style.transition='opacity .25s ease, height .3s ease, margin-bottom .3s ease, padding .3s ease';
+      el.style.opacity='0';
+      el.style.height='0';
+      el.style.marginBottom='0';
+      el.style.paddingTop='0';
+      el.style.paddingBottom='0';
+    });
+    setTimeout(()=>{el.remove();if(cb)cb();},310);
+  },delay);
 }
 
 function nbar(){
