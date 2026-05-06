@@ -3130,17 +3130,10 @@ function markArrivedFancy(id,idx,btnEl){
   siBtn.style.pointerEvents='none';
   noBtn.style.pointerEvents='none';
 
-  // Fade card glow simultaneously
+  // Kill card glow instantly when Sí is pressed
   const card=act.closest('.npcard');
   if(card){
-    const computedShadow=getComputedStyle(card).boxShadow;
-    card.style.animation='none';
-    card.style.boxShadow=computedShadow;
-    requestAnimationFrame(()=>{
-      card.style.transition='box-shadow .45s ease, background .45s ease';
-      card.style.boxShadow='none';
-      card.style.background='var(--surface-1)';
-    });
+    card.style.cssText+=';animation:none!important;box-shadow:var(--shadow-md)!important;background:var(--surface-1)!important';
   }
 
   // === Sí: SVG border erase ===
@@ -3513,18 +3506,9 @@ function animOut(id,cb){
     rect.style.strokeDashoffset='0';
     rect.style.opacity='1';
     rect.style.transition='';
-    // Pause animation to freeze current glow frame, then read computed value
-    el.style.animationPlayState='paused';
-    const frozenShadow=getComputedStyle(el).boxShadow;
-    const frozenBg=getComputedStyle(el).background;
-    el.style.animation='none';
-    el.style.boxShadow=frozenShadow;
-    el.style.background=frozenBg;
-    el.style.borderColor='transparent';
+    // Kill glow instantly before border erase
+    el.style.cssText+=';animation:none!important;box-shadow:var(--shadow-md)!important;background:var(--surface-1)!important;border-color:transparent!important';
     requestAnimationFrame(()=>{
-      el.style.transition='box-shadow .35s ease, background .35s ease';
-      el.style.boxShadow='none';
-      el.style.background='transparent';
       rect.style.transition='stroke-dashoffset .35s cubic-bezier(.65,0,.35,1)';
       rect.style.strokeDashoffset=perim;
     });
