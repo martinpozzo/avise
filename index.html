@@ -3130,6 +3130,19 @@ function markArrivedFancy(id,idx,btnEl){
   siBtn.style.pointerEvents='none';
   noBtn.style.pointerEvents='none';
 
+  // Fade card glow simultaneously
+  const card=act.closest('.npcard');
+  if(card){
+    const computedShadow=getComputedStyle(card).boxShadow;
+    card.style.animation='none';
+    card.style.boxShadow=computedShadow;
+    requestAnimationFrame(()=>{
+      card.style.transition='box-shadow .45s ease, background .45s ease';
+      card.style.boxShadow='none';
+      card.style.background='var(--surface-1)';
+    });
+  }
+
   // === Sí: SVG border erase ===
   const w=siBtn.offsetWidth, h=siBtn.offsetHeight;
   const svgNS='http://www.w3.org/2000/svg';
@@ -3500,14 +3513,16 @@ function animOut(id,cb){
     rect.style.strokeDashoffset='0';
     rect.style.opacity='1';
     rect.style.transition='';
-    // Freeze computed box-shadow before stopping animation, then fade to none
-    const computedShadow=getComputedStyle(el).boxShadow;
+    // Pause animation to freeze current glow frame, then read computed value
+    el.style.animationPlayState='paused';
+    const frozenShadow=getComputedStyle(el).boxShadow;
+    const frozenBg=getComputedStyle(el).background;
     el.style.animation='none';
-    el.style.boxShadow=computedShadow;
-    el.style.background=getComputedStyle(el).background;
+    el.style.boxShadow=frozenShadow;
+    el.style.background=frozenBg;
     el.style.borderColor='transparent';
     requestAnimationFrame(()=>{
-      el.style.transition='box-shadow .35s ease, background .35s ease, border-color .35s ease';
+      el.style.transition='box-shadow .35s ease, background .35s ease';
       el.style.boxShadow='none';
       el.style.background='transparent';
       rect.style.transition='stroke-dashoffset .35s cubic-bezier(.65,0,.35,1)';
