@@ -1813,6 +1813,7 @@ body.light #logo-img { filter: invert(1); }
 .panel-scroll{overflow-y:auto;overflow-x:clip;max-height:calc(88vh - 2rem);padding-right:2px}
 @keyframes revealDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes revealUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-out{opacity:0;transition:opacity .15s ease}
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -3093,11 +3094,11 @@ function togRp(id,e){
   const el=$(id);
   if(!el) return;
   if(el.classList.contains('on')){
-    el.style.animation='revealUp .15s ease forwards';
-    setTimeout(()=>{el.classList.remove('on');el.style.animation='';},140);
+    el.style.transition='opacity .15s ease';
+    el.style.opacity='0';
+    setTimeout(()=>{el.classList.remove('on');el.style.opacity='';el.style.transition='';},150);
   } else {
     el.classList.add('on');
-    el.style.animation='revealDown .18s ease';
   }
 }
 function rpQD(id,idx,el){
@@ -3133,11 +3134,10 @@ function togAct(id){
   if(!el) return;
   if(el.style.display==='none'||el.style.display===''){
     el.style.display='flex';
-    el.style.animation='none';
-    requestAnimationFrame(()=>{el.style.animation='revealDown .18s ease';});
   } else {
-    el.style.animation='revealUp .15s ease';
-    setTimeout(()=>{el.style.display='none';el.style.animation='';},140);
+    el.style.transition='opacity .15s ease';
+    el.style.opacity='0';
+    setTimeout(()=>{el.style.display='none';el.style.opacity='';el.style.transition='';},150);
   }
 }
 function markArrived(id,idx){
@@ -3478,17 +3478,8 @@ function _replaceCQCard(k){
   const newRows=Array.from(newCard.querySelectorAll('.cq-prod-row'));
   const changedIdxs=[];
   newRows.forEach((n,i)=>{if(!oldRows[i]||oldRows[i].innerHTML!==n.innerHTML) changedIdxs.push(i);});
-  // Find panels being hidden (were .on, now won't be .on)
-  const oldPanels=Array.from(oldCard.querySelectorAll('.alts-panel.on'));
-  const newPanels=new Set(Array.from(newCard.querySelectorAll('.alts-panel.on')).map(p=>p.closest('[data-pi]')?.dataset.pi));
-  const hiding=oldPanels.filter(p=>!newPanels.has(p.closest('[data-pi]')?.dataset.pi));
-  if(hiding.length>0){
-    hiding.forEach(p=>{p.style.animation='revealUp .15s ease forwards';});
-    setTimeout(()=>{newCard.style.animation='none';oldCard.replaceWith(newCard);},140);
-  } else {
-    newCard.style.animation='none';
-    oldCard.replaceWith(newCard);
-  }
+  newCard.style.animation='none';
+  oldCard.replaceWith(newCard);
   // Animate only the changed rows' inner panels
   if(changedIdxs.length>0){
     changedIdxs.forEach(i=>{
