@@ -3118,7 +3118,14 @@ function rpDel(id,idx){
 function togAct(id){
   const el=$(id);
   if(!el) return;
-  el.style.display = el.style.display==='none' ? 'flex' : 'none';
+  if(el.style.display==='none'||el.style.display===''){
+    el.style.display='flex';
+    el.style.animation='none';
+    requestAnimationFrame(()=>{el.style.animation='revealDown .18s ease';});
+  } else {
+    el.style.animation='revealUp .15s ease';
+    setTimeout(()=>{el.style.display='none';el.style.animation='';},140);
+  }
 }
 function markArrived(id,idx){
   const it=items.find(i=>i.id===id);if(!it||!it.products[idx])return;
@@ -3453,9 +3460,23 @@ function _replaceCQCard(k){
   tmp.innerHTML=newHtml;
   const newCard=tmp.firstElementChild;
   if(!newCard) return;
-  // Silent in-place swap, no animation = no flash
+  // Diff product rows to find which changed
+  const oldRows=Array.from(oldCard.querySelectorAll('.cq-prod-row'));
+  const newRows=Array.from(newCard.querySelectorAll('.cq-prod-row'));
+  const changedIdxs=[];
+  newRows.forEach((n,i)=>{if(!oldRows[i]||oldRows[i].innerHTML!==n.innerHTML) changedIdxs.push(i);});
+  // Silent swap
   newCard.style.animation='none';
   oldCard.replaceWith(newCard);
+  // Animate only the changed rows' inner panels
+  if(changedIdxs.length>0){
+    changedIdxs.forEach(i=>{
+      const row=newCard.querySelectorAll('.cq-prod-row')[i];
+      if(!row) return;
+      const panel=row.querySelector('.alts-panel.on');
+      if(panel){panel.style.animation='none';requestAnimationFrame(()=>{panel.style.animation='';});}
+    });
+  }
 }
 
 function renderCQ(){
