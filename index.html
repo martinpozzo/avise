@@ -1740,23 +1740,6 @@ body.light .logo-box svg{stroke:#FFFFFF}
 
 
 /* Morph swap animations for component-level changes */
-@keyframes morphOut {
-  0%   { transform: perspective(700px) rotateX(0deg) scale(1);    opacity: 1; filter: blur(0); }
-  100% { transform: perspective(700px) rotateX(14deg) scale(.9);  opacity: 0; filter: blur(3px); }
-}
-@keyframes morphIn {
-  0%   { transform: perspective(700px) rotateX(-14deg) scale(1.08); opacity: 0; filter: blur(3px); }
-  60%  { transform: perspective(700px) rotateX(2deg)   scale(.99);  opacity: 1; filter: blur(0); }
-  100% { transform: perspective(700px) rotateX(0deg)   scale(1);    opacity: 1; filter: blur(0); }
-}
-@keyframes morphPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,.55), 0 0 0 0 rgba(16,185,129,.35); }
-  40%  { box-shadow: 0 0 0 2px rgba(16,185,129,.45), 0 6px 20px rgba(16,185,129,.28); }
-  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0),    0 0 0 0 rgba(16,185,129,0); }
-}
-.morph-out { animation: morphOut .3s cubic-bezier(.4,0,.6,1) forwards !important; transform-origin: center; }
-.morph-in  { animation: morphIn  .42s cubic-bezier(.2,1.15,.4,1) forwards !important; transform-origin: center; }
-.morph-pulse { animation: morphIn .42s cubic-bezier(.2,1.15,.4,1) forwards, morphPulse .8s ease-out forwards !important; transform-origin: center; }
 
 /* Custom scrollbar */
 /* Hide ALL scrollbars globally — vertical and horizontal */
@@ -1803,7 +1786,7 @@ body.light #logo-img { filter: invert(1); }
 .btn-add-sel{justify-content:center;margin-bottom:6px;border-radius:var(--r-md);animation:cin .18s ease}
 
   /* Actions collapsed on mobile */
-  .npcard-acts-wrap{overflow:hidden;transition:max-height .25s ease, opacity .2s ease}
+  .npcard-acts-wrap{overflow:hidden}
   .npcard-acts-wrap.collapsed{max-height:0;opacity:0;pointer-events:none}
   .npcard-acts-wrap.expanded{max-height:80px;opacity:1}
   .npcard-tap-hint{font-size:10px;color:var(--text-3);text-align:right;padding:2px 0 0;display:none}
@@ -1811,9 +1794,6 @@ body.light #logo-img { filter: invert(1); }
 /* Panel scroll wrapper - allows dropdown to escape overflow */
 .panel{overflow:visible !important}
 .panel-scroll{overflow-y:auto;overflow-x:clip;max-height:calc(88vh - 2rem);padding-right:2px}
-@keyframes revealDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes revealUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.fade-out{opacity:0;transition:opacity .15s ease}
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -2935,19 +2915,8 @@ function _replaceCard(id){
   if(!newCard) return;
 
   // Helper: animate one element out then swap with new and animate in
-  const swapEl=(o,n,glow)=>{
-    if(_silentSwap.has(id)){
-      try{n.style.animation='none';o.replaceWith(n);}catch(e){}
-      return;
-    }
-    o.classList.add('morph-out');
-    setTimeout(()=>{
-      try{
-        o.replaceWith(n);
-        n.classList.add(glow?'morph-pulse':'morph-in');
-        setTimeout(()=>n.classList.remove('morph-in','morph-pulse'),glow?900:480);
-      }catch(e){}
-    },300);
+  const swapEl=(o,n)=>{
+    try{n.style.animation='none';o.replaceWith(n);}catch(e){}
   };
 
   // Helper: silently sync attributes (className, onclick, etc) without animation
@@ -2966,10 +2935,10 @@ function _replaceCard(id){
     const oK=Array.from(o.children);
     const nK=Array.from(n.children);
     // Different number of children → swap this whole subtree
-    if(oK.length!==nK.length){ swapEl(o,n,true); return; }
+    if(oK.length!==nK.length){ swapEl(o,n); return; }
     // Different tags among children → swap this whole subtree
     for(let i=0;i<oK.length;i++){
-      if(oK[i].tagName!==nK[i].tagName){ swapEl(o,n,true); return; }
+      if(oK[i].tagName!==nK[i].tagName){ swapEl(o,n); return; }
     }
     // Children's outerHTML all match → change is at THIS node (text/attrs)
     let allKidsMatch=true;
@@ -2978,7 +2947,7 @@ function _replaceCard(id){
     }
     if(allKidsMatch){
       // The change is text or attrs of this very element (or there are no children)
-      swapEl(o,n,true);
+      swapEl(o,n);
       return;
     }
     // Children differ in some places → sync THIS element's attrs silently, then recurse
@@ -3097,13 +3066,7 @@ function togRp(id,e){
   e.stopPropagation();
   const el=$(id);
   if(!el) return;
-  if(el.classList.contains('on')){
-    el.style.transition='opacity .15s ease';
-    el.style.opacity='0';
-    setTimeout(()=>{el.classList.remove('on');el.style.opacity='';el.style.transition='';},150);
-  } else {
-    el.classList.add('on');
-  }
+  el.classList.toggle('on');
 }
 function rpQD(id,idx,el){
   el.closest('.rp-dates').querySelectorAll('.rqd').forEach(b=>b.classList.toggle('on',b===el));
@@ -3139,9 +3102,7 @@ function togAct(id){
   if(el.style.display==='none'||el.style.display===''){
     el.style.display='flex';
   } else {
-    el.style.transition='opacity .15s ease';
-    el.style.opacity='0';
-    setTimeout(()=>{el.style.display='none';el.style.opacity='';el.style.transition='';},150);
+    el.style.display='none';
   }
 }
 function markArrivedFancy(id,idx,btnEl){
