@@ -2342,8 +2342,27 @@ function initFB(){
     });
     fbRef.child('cq').on('value',snap=>{
       if(!snap.val()){consultas=[];saveCQ();renderCQ();nbar();upBadges();return;}
-      consultas=Object.entries(snap.val()).map(([k,v])=>({...v,k})).sort((a,b)=>b.ts-a.ts);
-      saveCQ();renderCQ();nbar();upBadges();
+      const prev=consultas.map(x=>x.k);
+      const newData=Object.entries(snap.val()).map(([k,v])=>({...v,k})).sort((a,b)=>b.ts-a.ts);
+      const newKeys=newData.map(x=>x.k);
+      // Find changed, added, removed
+      const changed=newData.filter(n=>{
+        const old=consultas.find(o=>o.k===n.k);
+        return old&&JSON.stringify(old)!==JSON.stringify(n);
+      });
+      const added=newData.filter(n=>!prev.includes(n.k));
+      const removed=consultas.filter(o=>!newKeys.includes(o.k));
+      consultas=newData;
+      saveCQ();
+      // Apply smart updates
+      if(added.length||removed.length){
+        // Structural change: full re-render needed
+        renderCQ();
+      } else {
+        // Only update changed cards individually
+        changed.forEach(cq=>_replaceCQCard(cq.k));
+      }
+      nbar();upBadges();
     });
   }catch(e){console.warn('FB:',e.message);}
 }
