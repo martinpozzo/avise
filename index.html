@@ -3130,10 +3130,14 @@ function markArrivedFancy(id,idx,btnEl){
   siBtn.style.pointerEvents='none';
   noBtn.style.pointerEvents='none';
 
-  // Kill card glow instantly when Sí is pressed
+  // Kill green glow by removing the over class
   const card=act.closest('.npcard');
   if(card){
-    card.style.cssText+=';animation:none!important;box-shadow:var(--shadow-md)!important;background:var(--surface-1)!important';
+    card.classList.remove('npcard-over');
+    card.style.setProperty('animation','none','important');
+    card.style.setProperty('box-shadow','var(--shadow-md)','important');
+    card.style.setProperty('background','var(--surface-1)','important');
+    card.style.setProperty('border-color','var(--line-2)','important');
   }
 
   // === Sí: SVG border erase ===
@@ -3506,8 +3510,12 @@ function animOut(id,cb){
     rect.style.strokeDashoffset='0';
     rect.style.opacity='1';
     rect.style.transition='';
-    // Kill glow instantly before border erase
-    el.style.cssText+=';animation:none!important;box-shadow:var(--shadow-md)!important;background:var(--surface-1)!important;border-color:transparent!important';
+    // Kill green glow by removing classes that trigger it
+    el.classList.remove('npcard-over');
+    el.style.setProperty('animation','none','important');
+    el.style.setProperty('box-shadow','none','important');
+    el.style.setProperty('background','var(--surface-1)','important');
+    el.style.setProperty('border-color','transparent','important');
     requestAnimationFrame(()=>{
       rect.style.transition='stroke-dashoffset .35s cubic-bezier(.65,0,.35,1)';
       rect.style.strokeDashoffset=perim;
