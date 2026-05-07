@@ -3162,10 +3162,11 @@ function markArrivedFancy(id,idx,btnEl){
   svg.appendChild(rect);
   siBtn.style.position='relative';
   siBtn.appendChild(svg);
-  // Hide native border + bg simultaneously with SVG erase
-  siBtn.style.transition='border-color .45s cubic-bezier(.65,0,.35,1), background-color .45s cubic-bezier(.65,0,.35,1)';
+  // Hide native border + bg + shadow simultaneously with SVG erase
+  siBtn.style.transition='border-color .45s cubic-bezier(.65,0,.35,1), background-color .45s cubic-bezier(.65,0,.35,1), box-shadow .45s cubic-bezier(.65,0,.35,1)';
   siBtn.style.borderColor='transparent';
   siBtn.style.backgroundColor='transparent';
+  siBtn.style.boxShadow='none';
   // Fade inner content (text + check icon)
   Array.from(siBtn.childNodes).forEach(n=>{
     if(n!==svg&&n.nodeType===1){
