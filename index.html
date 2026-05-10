@@ -3195,10 +3195,12 @@ function markArrivedFancy(id,idx,btnEl){
 
   // === After 500ms: animate the structural changes BEFORE swap ===
   setTimeout(()=>{
+    const npitem=act.closest('.npitem');
+
     // 1. Crossfade label "¿Ingresó?" → "✓ Ingresó"
     const lbl=act.querySelector('.npitem-lbl');
     if(lbl){
-      lbl.style.transition='opacity .2s ease';
+      lbl.style.transition='opacity .2s ease, color .35s ease';
       lbl.style.opacity='0';
       setTimeout(()=>{
         lbl.innerHTML=`${ICO.CHECK} Ingresó`;
@@ -3221,7 +3223,42 @@ function markArrivedFancy(id,idx,btnEl){
       });
     }
 
-    // 3. Expand npcard-acts-wrap if it was collapsed
+    // 3. Morph npitem styling: smoothly transition from over → done state
+    if(npitem){
+      npitem.style.transition='background .4s ease, border-color .4s ease, opacity .4s ease';
+      // Apply done-state inline so it transitions
+      npitem.style.background='rgba(52,211,153,.04)';
+      npitem.style.borderColor='var(--line-2)';
+      npitem.style.opacity='.85';
+    }
+
+    // 4. Restore card to npcard-over styling smoothly (since it'll be over again with arrived product)
+    if(card){
+      card.style.transition='box-shadow .4s ease, background .4s ease, border-color .4s ease';
+      card.style.setProperty('border-color','var(--emerald-border)','');
+      card.style.setProperty('background','linear-gradient(135deg,var(--emerald-soft) 0%,var(--surface-1) 60%)','');
+      card.style.setProperty('box-shadow','0 0 0 1px rgba(52,211,153,.15),var(--shadow-md)','');
+    }
+
+    // 5. Update WhatsApp button text to "Avisar" with crossfade
+    if(card){
+      const waBtn=card.querySelector('.np-act-wa');
+      if(waBtn){
+        const textNode=Array.from(waBtn.childNodes).find(n=>n.nodeType===3&&n.textContent.trim());
+        if(textNode){
+          const span=document.createElement('span');
+          span.textContent=textNode.textContent;
+          span.style.transition='opacity .2s ease';
+          textNode.parentNode.replaceChild(span,textNode);
+          requestAnimationFrame(()=>{
+            span.style.opacity='0';
+            setTimeout(()=>{span.textContent=' Avisar';span.style.opacity='1';},200);
+          });
+        }
+      }
+    }
+
+    // 6. Expand npcard-acts-wrap if collapsed
     if(card){
       const wrap=card.querySelector('.npcard-acts-wrap');
       if(wrap&&wrap.classList.contains('collapsed')){
@@ -3230,7 +3267,6 @@ function markArrivedFancy(id,idx,btnEl){
         wrap.style.opacity='0';
         wrap.style.overflow='hidden';
         wrap.style.transition='max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s ease';
-        // Force reflow to apply initial state
         wrap.offsetHeight;
         const innerAct=wrap.querySelector('.npcard-acts');
         const targetH=innerAct?innerAct.scrollHeight+20:80;
@@ -3246,12 +3282,12 @@ function markArrivedFancy(id,idx,btnEl){
       }
     }
 
-    // 4. After structural animations complete, silent swap
+    // 7. After all visual changes match the future state, silent swap
     setTimeout(()=>{
       _silentSwap.add(id);
       markArrived(id,idx);
       setTimeout(()=>_silentSwap.delete(id),600);
-    },420);
+    },500);
   },500);
 }
 
