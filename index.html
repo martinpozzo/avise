@@ -2914,22 +2914,20 @@ function _replaceCard(id){
   const newCard=tmp.firstElementChild;
   if(!newCard) return;
 
-  // Helper: animate one element out then swap with new and animate in
+  // Helper: silent in-place swap with no animation or transition
   const swapEl=(o,n)=>{
     try{
-      n.style.animation='none';
-      n.style.borderColor='transparent';
-      o.replaceWith(n);
-      // Re-init SVG border silently (no animation, just restore CSS border)
+      // Block ALL animations on the new card (cin pop-in, glow, etc.)
+      n.style.setProperty('animation','none','important');
+      // Block ALL transitions on first render so it appears instantly
+      n.style.setProperty('transition','none','important');
+      // Hide the SVG decoration rect (we're not animating in)
       const nr=n.querySelector('.npcard-svg-rect');
-      if(nr){
-        const w=n.offsetWidth,h=n.offsetHeight,r2=13;
-        nr.setAttribute('x','1');nr.setAttribute('y','1');
-        nr.setAttribute('width',w-2);nr.setAttribute('height',h-2);
-        nr.setAttribute('stroke',_getBorderColor(n));
-        nr.style.opacity='0';
-        n.style.removeProperty('border-color');
-      }
+      if(nr) nr.style.opacity='0';
+      o.replaceWith(n);
+      // Force layout flush, then re-enable transitions for future interactions
+      n.offsetHeight;
+      requestAnimationFrame(()=>{n.style.removeProperty('transition');});
     }catch(e){}
   };
 
