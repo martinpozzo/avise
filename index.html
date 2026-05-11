@@ -2055,6 +2055,10 @@ body.light #logo-img { filter: invert(1); }
             <label class="tmpl-lbl">Hay de algunos, de otros no</label>
             <textarea class="tmpl-area" id="tmpl-cq-mix"></textarea>
           </div>
+          <div class="tmpl-block">
+            <label class="tmpl-lbl">Consulta por subcategoría (solo lista lo que hay)</label>
+            <textarea class="tmpl-area" id="tmpl-cq-subcat"></textarea>
+          </div>
         </div>
       </details>
 
@@ -2157,6 +2161,7 @@ const DEF_TMPL_MIX = 'Hola {nombre}! De lo que pediste: tenemos {hay}. Por ahora
 const DEF_TMPL_CQ_HAY = 'Hola {nombre}! Sí, en *este momento* contamos con stock de {hay}!';
 const DEF_TMPL_CQ_NOHAY = 'Hola {nombre}! Por ahora no contamos con stock de {nohay}.{alternativas} Cuando ingrese te aviso!';
 const DEF_TMPL_CQ_MIX = 'Hola {nombre}! Sí, en *este momento* contamos con stock de {hay}. Pero no contamos con stock de {nohay}.{alternativas} Cuando ingresen te aviso!';
+const DEF_TMPL_CQ_SUBCAT = 'Hola {nombre}! En *este momento* contamos con stock de {hay}!';
 const DEF_CATS = ['Lácteos','Aceites','Harinas','Bebidas','Conservas','Limpieza','Fiambres'];
 const DEF_PEOPLE = ['A cualquiera','Encargado','Gerente'];
 const DAYS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -3689,20 +3694,28 @@ function nbar(){
 }
 function sendFromBar(k){
   const c=consultas.find(x=>x.k===k);if(!c)return;
-  const hay=(c.products||[]).filter(p=>p.status==='hay').flatMap(p=>{
+  const hayProds=(c.products||[]).filter(p=>p.status==='hay');
+  const hay=hayProds.flatMap(p=>{
     const base=[{name:p.name,sn:p.sn||''}];
     (p.hayAlts||[]).forEach(a=>base.push({name:typeof a==='string'?a:a.name,sn:a.qty?a.qty+' disponibles':''}));
     return base;
   });
   // Only include in "no hay" products that were added INDIVIDUALLY
-  // (subcategory queries are "what do you have?" — don't list what's missing)
   const nohay=(c.products||[]).filter(p=>p.status==='nohay'&&!p.viaSubcat).map(p=>({name:p.name}));
   const alts=[];
   (c.products||[]).filter(p=>p.status==='nohay'&&!p.viaSubcat).forEach(p=>{
     (p.alts||[]).forEach(a=>alts.push({name:typeof a==='string'?a:a.name,qty:a.qty||''}));
   });
-  // Determine message type: hay-only / nohay-only / mix
-  const type=hay.length&&nohay.length?'mix':hay.length?'hay':'nohay';
+  // Detect "pure subcategory" case: all hay products came from a subcategory bulk-add
+  // AND there's no "individual nohay" to mention
+  const allHayViaSubcat=hayProds.length>0&&hayProds.every(p=>p.viaSubcat);
+  const noIndividualNohay=nohay.length===0;
+  let type;
+  if(allHayViaSubcat&&noIndividualNohay){
+    type='subcat';
+  } else {
+    type=hay.length&&nohay.length?'mix':hay.length?'hay':'nohay';
+  }
   showMsg(c.name,c.phone||'',type,hay,nohay,alts,()=>dismissBar(k),true);
 }
 function dismissBar(k){updCQ(k,{dismissed:true});}
@@ -4006,7 +4019,8 @@ function updMsg(){
   const {name,type,hay,nohay,alts,withName,withGreet,isCQ}=msgCtx;
   let tmpl;
   if(isCQ){
-    if(type==='hay') tmpl=localStorage.getItem('tmpl-cq-hay')||DEF_TMPL_CQ_HAY;
+    if(type==='subcat') tmpl=localStorage.getItem('tmpl-cq-subcat')||DEF_TMPL_CQ_SUBCAT;
+    else if(type==='hay') tmpl=localStorage.getItem('tmpl-cq-hay')||DEF_TMPL_CQ_HAY;
     else if(type==='nohay') tmpl=localStorage.getItem('tmpl-cq-nohay')||DEF_TMPL_CQ_NOHAY;
     else tmpl=localStorage.getItem('tmpl-cq-mix')||DEF_TMPL_CQ_MIX;
   } else {
@@ -4870,6 +4884,7 @@ function openSettings(){
   $('tmpl-cq-hay').value=localStorage.getItem('tmpl-cq-hay')||DEF_TMPL_CQ_HAY;
   $('tmpl-cq-nohay').value=localStorage.getItem('tmpl-cq-nohay')||DEF_TMPL_CQ_NOHAY;
   $('tmpl-cq-mix').value=localStorage.getItem('tmpl-cq-mix')||DEF_TMPL_CQ_MIX;
+  $('tmpl-cq-subcat').value=localStorage.getItem('tmpl-cq-subcat')||DEF_TMPL_CQ_SUBCAT;
   renderSLists();renderTrash();
   $('ov-settings').classList.add('on');
 }
@@ -4882,6 +4897,7 @@ function saveTmpls(){
   localStorage.setItem('tmpl-cq-hay',$('tmpl-cq-hay').value);
   localStorage.setItem('tmpl-cq-nohay',$('tmpl-cq-nohay').value);
   localStorage.setItem('tmpl-cq-mix',$('tmpl-cq-mix').value);
+  localStorage.setItem('tmpl-cq-subcat',$('tmpl-cq-subcat').value);
   toast('Plantillas guardadas');
 }
 function openProds(){renderProds();$('ov-prods').classList.add('on');}
