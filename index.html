@@ -1794,6 +1794,17 @@ body.light #logo-img { filter: invert(1); }
 /* Panel scroll wrapper - allows dropdown to escape overflow */
 .panel{overflow:visible !important}
 .panel-scroll{overflow-y:auto;overflow-x:clip;max-height:calc(88vh - 2rem);padding-right:2px}
+/* Subcategory group header in CQ cards */
+.cq-subgroup-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px;padding:8px 12px;background:var(--cyan-soft);border:1px solid var(--cyan-border);border-radius:var(--r-md);flex-wrap:wrap}
+.cq-subgroup-name{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--cyan-text);letter-spacing:.3px;text-transform:uppercase}
+.cq-subgroup-acts{display:flex;gap:6px;flex-wrap:wrap}
+.cq-bulk-btn{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;transition:all .15s;display:inline-flex;align-items:center;gap:4px;background:transparent}
+.cq-bulk-hay{color:var(--emerald-text);border-color:var(--emerald-border)}
+.cq-bulk-hay:hover{background:var(--emerald-soft)}
+.cq-bulk-nohay{color:var(--rose-text);border-color:var(--rose-border)}
+.cq-bulk-nohay:hover{background:var(--rose-soft)}
+.dd-item-subcat{background:var(--cyan-soft);border-bottom:1px solid var(--cyan-border)}
+.dd-item-subcat:hover{background:rgba(34,211,238,.18)}
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -3733,6 +3744,16 @@ function buildCQCard(c){
   const ag=Math.round((Date.now()-c.ts)/60000);
   const ke=jesc(c.k);
   let prodRows='';
+  // Compute subcategory groups for bulk actions
+  const subGroups={};
+  (c.products||[]).forEach((p,i)=>{
+    const pi=gp(p.name);
+    const key=(pi?.category||'')+'›'+(pi?.subcategory||'');
+    if(!pi?.subcategory) return;
+    if(!subGroups[key]) subGroups[key]={cat:pi.category,sub:pi.subcategory,indices:[]};
+    subGroups[key].indices.push(i);
+  });
+  const renderedGroups=new Set();
   (c.products||[]).forEach((p,i)=>{
     const pi=gp(p.name);
     const pCat=pi?.category||'',pSub=pi?.subcategory||'';
@@ -3755,6 +3776,19 @@ function buildCQCard(c){
     }
     const hayOn=p.status==='hay'?' on':'';
     const nohayOn=p.status==='nohay'?' on':'';
+    // Inject subcategory group header before the FIRST product of any group with 2+ items
+    const grpKey=pCat+'›'+pSub;
+    if(pSub&&subGroups[grpKey]&&subGroups[grpKey].indices.length>=2&&!renderedGroups.has(grpKey)){
+      renderedGroups.add(grpKey);
+      const idxJSON=JSON.stringify(subGroups[grpKey].indices);
+      prodRows+=`<div class="cq-subgroup-hdr">
+        <div class="cq-subgroup-name"><svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--cyan-text)"><path d="M3 7h18M3 12h18M3 17h18"/></svg> ${esc(pSub)} <small style="color:var(--text-3);font-weight:500">· ${subGroups[grpKey].indices.length} prod.</small></div>
+        <div class="cq-subgroup-acts">
+          <button class="cq-bulk-btn cq-bulk-hay" onclick='bulkSetStatus("${ke}",${idxJSON},"hay")'>${ICO.CHECK} Todos hay</button>
+          <button class="cq-bulk-btn cq-bulk-nohay" onclick='bulkSetStatus("${ke}",${idxJSON},"nohay")'>✕ Todos no hay</button>
+        </div>
+      </div>`;
+    }
     prodRows+=`<div class="cq-pb"><div class="cqpb-top"><div class="cqpb-left"><div class="cqpb-name">${esc(p.name)}</div><input class="cqpb-note-inp" type="text" placeholder="Aclaración del cliente..." value="${esc(p.note||'')}" onchange="setProdNote('${ke}',${i},this.value)"/></div><div class="cqpb-btns"><button class="cqpbb hay${hayOn}" onclick="setStatus('${ke}',${i},'hay')">${ICO.CHECK} Hay</button><button class="cqpbb nohay${nohayOn}" onclick="setStatus('${ke}',${i},'nohay')">${ICO.X} No hay</button></div></div>`;
     if(p.status==='hay'){
       const hayAlts=p.hayAlts||[];
@@ -3804,6 +3838,21 @@ function buildCQCard(c){
     foot=`<span class="cq-foot-lbl">Marcá cada producto...</span><button class="btn-discard" onclick="rmCQ('${ke}')">Cancelar</button>`;
   }
   return `<div class="cq-card" data-cqk="${ke}"><div class="cq-head"><div><div class="cqh-name">${esc(c.name)}</div><div class="cqh-phone">${esc(c.phone||'Sin número')}</div></div><div class="cqh-meta"><div class="cqh-age">${ag<1?'ahora':ag+'m'}</div><button class="btn-edit-cq" onclick="editCQ('${ke}')">${ICO.EDIT} Editar</button></div></div><div class="cq-body">${prodRows}</div><div class="cq-foot">${foot}</div></div>`;
+}
+
+function bulkSetStatus(k,indices,status){
+  const c=consultas.find(x=>x.k===k);if(!c)return;
+  indices.forEach(idx=>{
+    if(!c.products[idx]) return;
+    if(c.products[idx].status===status){
+      // Skip - already in this state (don't toggle off in bulk)
+      return;
+    }
+    c.products[idx].status=status;
+    if(status==='hay') c.products[idx].alts=[];
+    if(status==='nohay') c.products[idx].sn='';
+  });
+  updCQ(k,{products:c.products});
 }
 
 function setStatus(k,idx,status){
@@ -4145,10 +4194,32 @@ function prodSearch(){
   const resultsEl=$('dd-results');
   const dd=$('prod-dd');
   if(!q.trim()){dd.classList.remove('on');resultsEl.innerHTML='';_prodSel.clear();_updProdSelBtn();return;}
+  // Match subcategories first (whole-group queries like "cremosos")
+  const subMatches=[];
+  const seenSubs=new Set();
+  products.forEach(p=>{
+    if(!p.subcategory||!p.category) return;
+    const key=p.category+'›'+p.subcategory;
+    if(seenSubs.has(key)) return;
+    if(fuzzy(q,p.subcategory)||fuzzy(q,p.category+' '+p.subcategory)){
+      const items=products.filter(x=>x.active!==false&&x.category===p.category&&x.subcategory===p.subcategory);
+      if(items.length>=2){
+        seenSubs.add(key);
+        subMatches.push({cat:p.category,sub:p.subcategory,count:items.length});
+      }
+    }
+  });
   const m=products.filter(p=>(showInactive||p.active!==false)&&fuzzy(q,p.name));
   ddIdx=-1;
   const isNew=!products.find(p=>p.name.toLowerCase()===q.toLowerCase());
   let h='';
+  // Subcategory chips at top
+  subMatches.slice(0,3).forEach(sm=>{
+    h+=`<div class="dd-item dd-item-subcat" onclick="_addSubcatToForm('${jesc(sm.cat)}','${jesc(sm.sub)}')">
+      <svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--cyan-text);flex-shrink:0"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+      <span><b style="color:var(--cyan-text)">${esc(sm.sub)}</b> <small style="color:var(--text-3)">(${sm.count} productos · ${esc(sm.cat)})</small></span>
+    </div>`;
+  });
   m.slice(0,12).forEach(p=>{
     const chk=_prodSel.has(p.name)?'checked':'';
     h+=`<div class="dd-item dd-item-chk${p.active===false?' dim':''}" onclick="_togProdSel('${jesc(p.name)}',this)">
@@ -4160,6 +4231,23 @@ function prodSearch(){
   resultsEl.innerHTML=h;
   dd.classList.add('on');
   _updProdSelBtn();
+}
+
+function _addSubcatToForm(cat,sub){
+  const items=products.filter(x=>x.active!==false&&x.category===cat&&x.subcategory===sub);
+  let added=0;
+  items.forEach(p=>{
+    if(!formProds.find(fp=>fp.name===p.name)){
+      addFormProdByName(p.name);
+      added++;
+    }
+  });
+  $('f-prod-inp').value='';
+  $('dd-results').innerHTML='';
+  $('prod-dd').classList.remove('on');
+  _prodSel.clear();
+  _updProdSelBtn();
+  toast(`✓ ${added} productos de "${sub}" agregados`);
 }
 function _togProdSel(name,el){
   if(_prodSel.has(name)){_prodSel.delete(name);el.querySelector('.dd-chk')?.classList.remove('checked');}
