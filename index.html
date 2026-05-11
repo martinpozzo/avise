@@ -3694,9 +3694,11 @@ function sendFromBar(k){
     (p.hayAlts||[]).forEach(a=>base.push({name:typeof a==='string'?a:a.name,sn:a.qty?a.qty+' disponibles':''}));
     return base;
   });
-  const nohay=(c.products||[]).filter(p=>p.status==='nohay').map(p=>({name:p.name}));
+  // Only include in "no hay" products that were added INDIVIDUALLY
+  // (subcategory queries are "what do you have?" — don't list what's missing)
+  const nohay=(c.products||[]).filter(p=>p.status==='nohay'&&!p.viaSubcat).map(p=>({name:p.name}));
   const alts=[];
-  (c.products||[]).filter(p=>p.status==='nohay').forEach(p=>{
+  (c.products||[]).filter(p=>p.status==='nohay'&&!p.viaSubcat).forEach(p=>{
     (p.alts||[]).forEach(a=>alts.push({name:typeof a==='string'?a:a.name,qty:a.qty||''}));
   });
   // Determine message type: hay-only / nohay-only / mix
@@ -4239,6 +4241,9 @@ function _addSubcatToForm(cat,sub){
   items.forEach(p=>{
     if(!formProds.find(fp=>fp.name===p.name)){
       addFormProdByName(p.name);
+      // Tag last added with viaSubcat
+      const last=formProds[formProds.length-1];
+      if(last&&last.name===p.name) last.viaSubcat=sub;
       added++;
     }
   });
@@ -4363,11 +4368,11 @@ function saveForm(){
       const c=consultas.find(x=>x.k===formId);if(!c)return;
       const newProds=formProds.map(p=>{
         const ex=(c.products||[]).find(ep=>ep.name.toLowerCase()===p.name.toLowerCase());
-        return ex?{...ex,name:p.name,note:p.note||ex.note||''}:{name:p.name,note:p.note||'',status:'pending',alts:[],sn:''};
+        return ex?{...ex,name:p.name,note:p.note||ex.note||'',viaSubcat:p.viaSubcat??ex.viaSubcat??null}:{name:p.name,note:p.note||'',status:'pending',alts:[],sn:'',viaSubcat:p.viaSubcat||null};
       });
       updCQ(formId,{name,phone,products:newProds});
     } else {
-      const cqProds=formProds.map(p=>({name:p.name,note:p.note||'',status:'pending',alts:[],sn:''}));
+      const cqProds=formProds.map(p=>({name:p.name,note:p.note||'',status:'pending',alts:[],sn:'',viaSubcat:p.viaSubcat||null}));
       pushCQ({name,phone,products:cqProds,resolved:false,dismissed:false});
     }
     closeForm();toast(formId?'Consulta actualizada':'Consulta creada');setMode('cq');
