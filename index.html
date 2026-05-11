@@ -4236,6 +4236,14 @@ function prodSearch(){
       <span><b style="color:var(--cyan-text)">${esc(sm.sub)}</b> <small style="color:var(--text-3)">(${sm.count} productos · ${esc(sm.cat)})</small></span>
     </div>`;
   });
+  // Bulk-match chip when 2+ products match and no subcategory chip already covers them
+  const activeMatches=m.filter(p=>p.active!==false);
+  if(activeMatches.length>=2&&subMatches.length===0){
+    h+=`<div class="dd-item dd-item-subcat" onclick='_addMatchingToForm(${JSON.stringify(q)})'>
+      <svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--amber-text);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span><b style="color:var(--amber-text)">Agregar todos los "${esc(q)}"</b> <small style="color:var(--text-3)">(${activeMatches.length} productos)</small></span>
+    </div>`;
+  }
   m.slice(0,12).forEach(p=>{
     const chk=_prodSel.has(p.name)?'checked':'';
     h+=`<div class="dd-item dd-item-chk${p.active===false?' dim':''}" onclick="_togProdSel('${jesc(p.name)}',this)">
@@ -4249,13 +4257,31 @@ function prodSearch(){
   _updProdSelBtn();
 }
 
+function _addMatchingToForm(q){
+  const items=products.filter(x=>x.active!==false&&fuzzy(q,x.name));
+  let added=0;
+  items.forEach(p=>{
+    if(!formProds.find(fp=>fp.name===p.name)){
+      addFormProdByName(p.name);
+      const last=formProds[formProds.length-1];
+      if(last&&last.name===p.name) last.viaSubcat=q;
+      added++;
+    }
+  });
+  $('f-prod-inp').value='';
+  $('dd-results').innerHTML='';
+  $('prod-dd').classList.remove('on');
+  _prodSel.clear();
+  _updProdSelBtn();
+  toast(`✓ ${added} productos de "${q}" agregados`);
+}
+
 function _addSubcatToForm(cat,sub){
   const items=products.filter(x=>x.active!==false&&x.category===cat&&x.subcategory===sub);
   let added=0;
   items.forEach(p=>{
     if(!formProds.find(fp=>fp.name===p.name)){
       addFormProdByName(p.name);
-      // Tag last added with viaSubcat
       const last=formProds[formProds.length-1];
       if(last&&last.name===p.name) last.viaSubcat=sub;
       added++;
