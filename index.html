@@ -2847,7 +2847,25 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function norm(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/h/g,'').replace(/[^a-z0-9 ]/g,'').trim();}
 function lev(a,b){if(!a.length)return b.length;if(!b.length)return a.length;const d=Array.from({length:a.length+1},(_,i)=>Array.from({length:b.length+1},(_,j)=>i||j));for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);return d[a.length][b.length];}
-function fuzzy(q,t){const nq=norm(q),nt=norm(t);if(!nq)return true;if(nt.includes(nq))return true;for(const w of nt.split(/\s+/)){if(w.startsWith(nq))return true;if(nq.length>=3&&Math.abs(w.length-nq.length)<=2&&lev(nq,w)<=Math.ceil(nq.length/3))return true;}return false;}
+function fuzzy(q,t){
+  const nq=norm(q),nt=norm(t);
+  if(!nq)return true;
+  if(nt.includes(nq))return true;
+  for(const w of nt.split(/\s+/)){
+    if(w.startsWith(nq))return true;
+    // Levenshtein typo tolerance — but require a strong common prefix
+    // to avoid false matches like "polenta" matching "plata"
+    if(nq.length>=4){
+      const minPrefix=Math.max(2,Math.ceil(nq.length/2));
+      let prefix=0;
+      while(prefix<nq.length&&prefix<w.length&&nq[prefix]===w[prefix]) prefix++;
+      if(prefix<minPrefix) continue;
+      const maxLev=nq.length<=6?1:2;
+      if(Math.abs(w.length-nq.length)<=2&&lev(nq,w)<=maxLev) return true;
+    }
+  }
+  return false;
+}
 
 function fd(d){try{return new Date(d+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'});}catch(e){return '';}}
 function ago(ts){const d=Math.floor((Date.now()-(Number(ts)||Date.now()))/86400000);return d===0?'Hoy':d===1?'Hace 1 día':`Hace ${d} días`;}
