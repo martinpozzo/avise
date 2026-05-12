@@ -3296,7 +3296,11 @@ function markArrivedFancy(id,idx,btnEl){
     noBtn.style.opacity='1';
     noBtn.style.transform='rotate(0deg) scale(1)';
     // Fix onclick: the button now undoes the "arrived" action
-    noBtn.onclick=(e)=>{e.stopPropagation();unmarkArrived(id,idx);};
+    noBtn.onclick=(e)=>{
+      e.stopPropagation();
+      _silentSwap.delete(id); // allow _replaceCard to run
+      unmarkArrived(id,idx);
+    };
   },200);
 
   // === After 500ms: animate the structural changes BEFORE swap ===
