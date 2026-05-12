@@ -2352,6 +2352,23 @@ function initFB(){
       if(!snap.val()) return;
       const d=snap.val();
       try{
+        // On first load: compare with what localStorage already rendered
+        if(_fbFirstLoad){
+          _fbFirstLoad=false;
+          const prevItems=JSON.stringify(items);
+          if(d.i) items=mig(JSON.parse(d.i));
+          if(d.p) products=JSON.parse(d.p);
+          if(d.c) categories=JSON.parse(d.c);
+          if(d.sc) subcats=JSON.parse(d.sc);
+          if(d.pe) people=JSON.parse(d.pe);
+          if(d.cl) clients=JSON.parse(d.cl);
+          if(d.ct) catTrash=JSON.parse(d.ct);
+          const newItems=JSON.stringify(items);
+          // Only re-render pendientes if data actually changed
+          if(prevItems!==newItems) renderPend();
+          renderCQ();nbar();upBadges();
+          return;
+        }
         if(d.i) items=mig(JSON.parse(d.i));
         if(d.p) products=JSON.parse(d.p);
         if(d.c) categories=JSON.parse(d.c);
@@ -2359,12 +2376,6 @@ function initFB(){
         if(d.pe) people=JSON.parse(d.pe);
         if(d.cl) clients=JSON.parse(d.cl);
         if(d.ct) catTrash=JSON.parse(d.ct);
-        // On first load: Firebase is source of truth — always render
-        if(_fbFirstLoad){
-          _fbFirstLoad=false;
-          renderPend();renderCQ();nbar();upBadges();
-          return;
-        }
         if(!_suppressRender){
           renderPend();
           renderHist();
