@@ -796,7 +796,7 @@ select option{background:var(--surface-1);color:var(--text-1)}
 .search-wrap{position:relative;margin-bottom:6px}
 .search-wrap input{width:100%;padding:11px 14px;border:1px solid var(--line-2);border-radius:var(--r-md);font-size:14px;color:var(--text-0);background:var(--surface-2);outline:none;transition:all .15s;-webkit-appearance:none}
 .search-wrap input:focus{border-color:var(--cyan-border);background:var(--surface-3)}
-.search-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface-2);border:1px solid var(--line-3);border-radius:var(--r-md);box-shadow:var(--shadow-lg);z-index:200;overflow-y:auto;max-height:320px;display:none}
+.search-dd{position:fixed;background:var(--surface-2);border:1px solid var(--line-3);border-radius:var(--r-md);box-shadow:var(--shadow-lg);z-index:9999;overflow-y:auto;max-height:320px;display:none}
 .search-dd.on{display:block;animation:slideUp .14s var(--ease-smooth)}
 .dd-filter{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line-1);background:var(--surface-3);cursor:pointer;user-select:none}
 .dd-filter label{font-size:12px;color:var(--text-1);cursor:pointer;font-weight:500;flex:1;user-select:none}
@@ -1792,8 +1792,6 @@ body.light #logo-img { filter: invert(1); }
   .npcard-tap-hint{font-size:10px;color:var(--text-3);text-align:right;padding:2px 0 0;display:none}
 
 /* Panel scroll wrapper - allows dropdown to escape overflow */
-.panel{overflow:visible !important}
-.panel-scroll{overflow-y:auto;overflow-x:clip;max-height:calc(88vh - 2rem);padding-right:2px}
 /* Subcategory group header in CQ cards */
 .cq-subgroup-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px;padding:8px 12px;background:var(--cyan-soft);border:1px solid var(--cyan-border);border-radius:var(--r-md);flex-wrap:wrap}
 .cq-subgroup-name{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--cyan-text);letter-spacing:.3px;text-transform:uppercase}
@@ -2875,6 +2873,14 @@ function showPrompt(title,msg,defaultVal,onOk,placeholder){
 }
 function closePrompt(){$('ov-prompt').classList.remove('on');promptCb=null;}
 
+function _portalDd(){
+  const dd=$('prod-dd');
+  if(dd&&dd.parentElement&&dd.parentElement.id!=='portal-root'){
+    // Move to body so overflow:auto on .panel doesn't clip it
+    document.body.appendChild(dd);
+  }
+}
+
 function init(){
   initTheme();
   try{items=mig(JSON.parse(localStorage.getItem('items')||'[]'));}catch(e){items=[];}
@@ -2892,6 +2898,7 @@ function init(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
+  _portalDd();
   if(checkLogin()){
     init();
   } else {
@@ -4302,6 +4309,14 @@ function prodSearch(){
   });
   if(isNew) h+=`<div class="dd-item dim" onclick="selProd('${jesc(q)}',true)">${ICO.PLUS} Agregar "${esc(q)}"</div>`;
   resultsEl.innerHTML=h;
+  // Position fixed dropdown relative to input (works even inside transformed containers)
+  const inp=$('f-prod-inp');
+  if(inp&&dd){
+    const r=inp.getBoundingClientRect();
+    dd.style.top=(r.bottom+4)+'px';
+    dd.style.left=r.left+'px';
+    dd.style.width=r.width+'px';
+  }
   dd.classList.add('on');
   _updProdSelBtn();
 }
