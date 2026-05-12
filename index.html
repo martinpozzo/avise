@@ -2352,10 +2352,11 @@ function initFB(){
       if(!snap.val()) return;
       const d=snap.val();
       try{
-        // On first load: compare with what localStorage already rendered
+        // On first load: update data silently then do per-card diff (no full rebuild = no flash)
         if(_fbFirstLoad){
           _fbFirstLoad=false;
-          const prevItems=JSON.stringify(items);
+          const prevIds=new Set(items.map(i=>i.id));
+          const prevMap=Object.fromEntries(items.map(i=>[i.id,JSON.stringify(i)]));
           if(d.i) items=mig(JSON.parse(d.i));
           if(d.p) products=JSON.parse(d.p);
           if(d.c) categories=JSON.parse(d.c);
@@ -2363,9 +2364,22 @@ function initFB(){
           if(d.pe) people=JSON.parse(d.pe);
           if(d.cl) clients=JSON.parse(d.cl);
           if(d.ct) catTrash=JSON.parse(d.ct);
-          const newItems=JSON.stringify(items);
-          // Only re-render pendientes if data actually changed
-          if(prevItems!==newItems) renderPend();
+          // Smart per-card update: only touch cards that actually changed
+          const newIds=new Set(items.map(i=>i.id));
+          // Remove cards no longer in Firebase
+          prevIds.forEach(id=>{if(!newIds.has(id)){const el=document.querySelector(`[data-id="${id}"]`);if(el)el.remove();}});
+          // Update changed cards silently (no animation)
+          items.forEach(item=>{
+            if(prevMap[item.id]&&prevMap[item.id]!==JSON.stringify(item)){
+              _silentSwap.add(item.id);
+              _replaceCard(item.id);
+              setTimeout(()=>_silentSwap.delete(item.id),500);
+            } else if(!prevMap[item.id]){
+              // New card: append without animation
+              _silentSwap.add(item.id);
+              setTimeout(()=>_silentSwap.delete(item.id),500);
+            }
+          });
           renderCQ();nbar();upBadges();
           return;
         }
