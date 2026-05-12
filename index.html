@@ -3004,6 +3004,8 @@ function expTag(d,p){
 
 
 function _replaceCard(id){
+  // Skip DOM rebuild if pre-animation already handled the visual update
+  if(_silentSwap.has(id)) return;
   const it=items.find(i=>i.id===id);
   const oldCard=document.querySelector(`[data-id="${id}"]`);
   if(!oldCard) return;
@@ -3384,11 +3386,17 @@ function markArrivedFancy(id,idx,btnEl){
       }
     }
 
-    // 7. After all visual changes match the future state, silent swap
+    // 7. After all visual changes match the future state, update data + push only (no DOM rebuild)
     setTimeout(()=>{
+      // Update data in memory
+      const it=items.find(i=>i.id===id);
+      if(it&&it.products[idx]) it.products[idx].arrived=true;
+      // Save + push to Firebase without triggering _replaceCard
       _silentSwap.add(id);
-      markArrived(id,idx);
-      setTimeout(()=>_silentSwap.delete(id),600);
+      push();
+      // _replaceCard would be called by push → Firebase → listener
+      // but _suppressRender blocks that. Just cleanup after delay.
+      setTimeout(()=>_silentSwap.delete(id),2500);
     },500);
   },500);
 }
