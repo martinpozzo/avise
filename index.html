@@ -3418,6 +3418,7 @@ function markArrived(id,idx){
 function unmarkArrived(id,idx){
   const it=items.find(i=>i.id===id);if(!it||!it.products[idx])return;
   it.products[idx].arrived=false;
+  _silentSwap.delete(id); // allow _replaceCard to rebuild the card
   push();
   _replaceCard(id);
   toast('Marca deshecha');
