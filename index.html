@@ -3295,10 +3295,10 @@ function markArrivedFancy(id,idx,btnEl){
     noBtn.innerHTML=ICO.REFRESH;
     noBtn.style.opacity='1';
     noBtn.style.transform='rotate(0deg) scale(1)';
-    // Fix onclick: the button now undoes the "arrived" action
+    noBtn.style.pointerEvents='auto'; // restore so undo works
     noBtn.onclick=(e)=>{
       e.stopPropagation();
-      _silentSwap.delete(id); // allow _replaceCard to run
+      _silentSwap.delete(id);
       unmarkArrived(id,idx);
     };
   },200);
