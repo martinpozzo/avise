@@ -4444,13 +4444,14 @@ function selProd(name,isNew){
 function prodKey(e){
   const dd=$('prod-dd');
   const opts=Array.from($('dd-results').querySelectorAll('.dd-item'));
-  if(e.key==='ArrowDown'){
+  const ddOpen=dd.classList.contains('on');
+  if(e.key==='ArrowDown'||(!e.shiftKey&&e.key==='Tab'&&ddOpen)){
     e.preventDefault();
     ddIdx=Math.min(ddIdx+1,opts.length-1);
     opts.forEach((o,i)=>o.classList.toggle('hi',i===ddIdx));
     if(opts[ddIdx]) opts[ddIdx].scrollIntoView({block:'nearest'});
   }
-  else if(e.key==='ArrowUp'){
+  else if(e.key==='ArrowUp'||(e.shiftKey&&e.key==='Tab'&&ddOpen)){
     e.preventDefault();
     ddIdx=Math.max(ddIdx-1,0);
     opts.forEach((o,i)=>o.classList.toggle('hi',i===ddIdx));
