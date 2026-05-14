@@ -3078,6 +3078,50 @@ function init(){
   try{consultas=JSON.parse(localStorage.getItem('cqs')||'[]');}catch(e){consultas=[];}
   initFB();
   renderPend();renderCQ();nbar();upBadges();
+  // ═══ Handle external triggers via URL params (e.g. from Chrome extension) ═══
+  setTimeout(_handleUrlAction,300);
+}
+
+function _handleUrlAction(){
+  try{
+    const p=new URLSearchParams(window.location.search);
+    const action=p.get('action');
+    if(!action)return;
+    const name=(p.get('name')||'').trim();
+    const phone=(p.get('phone')||'').trim();
+    // Clean params from URL so refreshes don't re-trigger
+    history.replaceState({},'',window.location.pathname);
+    if(action==='newcq'){
+      // Match existing client by phone (preferred) or name
+      let matched=null;
+      if(phone){
+        matched=clients.find(c=>(c.phone||'').replace(/\D/g,'')===phone.replace(/\D/g,''));
+      }
+      if(!matched&&name){
+        const nm=norm(name);
+        matched=clients.find(c=>norm(c.name||'')===nm||norm(c.nickname||'')===nm);
+      }
+      // Open CQ form
+      openForm('cq');
+      setTimeout(()=>{
+        const nameInp=$('f-name'), phoneInp=$('f-phone');
+        if(nameInp) nameInp.value=matched?matched.name:name;
+        if(phoneInp) phoneInp.value=matched?(matched.phone||''):phone;
+        // Create client if not found
+        if(!matched&&name){
+          const newClient={name,phone:phone||'',nickname:'',code:String(nextCode++)};
+          clients.push(newClient);
+          try{localStorage.setItem('clients',JSON.stringify(clients));}catch(e){}
+          push();
+          toast(`Cliente nuevo: ${name}`);
+        } else if(matched){
+          toast(`Cliente: ${matched.name}`);
+        }
+        // Focus product input
+        $('f-prod-inp')?.focus();
+      },200);
+    }
+  }catch(e){console.error('URL action error:',e);}
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
