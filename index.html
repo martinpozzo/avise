@@ -1880,6 +1880,42 @@ body.light #logo-img { filter: invert(1); }
   transition:opacity var(--anim-duration-fast) var(--anim-easing);
 }
 
+
+/* ═══ UNIVERSAL BUTTON PRESS FEEDBACK ═══
+   Every button gets a subtle press animation. Automatic, no opt-in.
+*/
+button, .btn-action, .btn-submit, .btn-add-prod, .btn-add-sel, .np-act, .np-btn, .cqpbb,
+.cq-bulk-btn, .cq-mode-btn, .alt-chip, .dd-item, .pill, .chip, .fab,
+[role="button"], a.btn, [class*="-btn"]{
+  transition:transform .12s var(--anim-easing-spring),
+             box-shadow .18s var(--anim-easing),
+             background-color .18s var(--anim-easing),
+             border-color .18s var(--anim-easing),
+             opacity .18s var(--anim-easing),
+             color .18s var(--anim-easing);
+}
+button:not(:disabled):active, .btn-action:active, .btn-submit:active,
+.btn-add-prod:active, .btn-add-sel:active, .np-act:active, .np-btn:active,
+.cqpbb:active, .cq-bulk-btn:active, .cq-mode-btn:active, .alt-chip:active,
+.fab:active, [role="button"]:active{
+  transform:scale(.96);
+  transition-duration:.08s;
+}
+
+/* ═══ BUTTON ENTRY/EXIT ANIMATIONS ═══
+   When buttons get .btn-enter / .btn-exit, they animate accordingly.
+   Add classes via JS for dynamically inserted/removed buttons.
+*/
+@keyframes btnFadeIn{
+  from{opacity:0;transform:translateY(6px) scale(.94)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes btnFadeOut{
+  from{opacity:1;transform:translateY(0) scale(1)}
+  to{opacity:0;transform:translateY(-4px) scale(.96)}
+}
+.btn-enter{animation:btnFadeIn .28s var(--anim-easing-spring) both}
+.btn-exit{animation:btnFadeOut .2s var(--anim-easing) both;pointer-events:none}
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -3201,6 +3237,7 @@ function _replaceCard(id){
 }
 
 function buildCard(it,delay){
+  const isMobile=window.innerWidth<=768;
   if(!it.products) it.products=[];
   const isOv=!it.done&&(it.products.some(p=>isArrival(p.exp)&&!p.arrived)||it.products.some(p=>p.arrived));
   const pi=it.products[0]?gp(it.products[0].name):null;
@@ -3296,7 +3333,7 @@ function buildCard(it,delay){
     </div>
     <div class="npcard-prods">${prodsHtml}</div>
     ${note}
-    <div class="npcard-acts-wrap anim-slide is-visible" id="${actsId}"><div class="npcard-acts">${acts}</div></div>
+    <div class="npcard-acts-wrap anim-slide ${isOv||it.done||!isMobile?'is-visible':''}" id="${actsId}"><div class="npcard-acts">${acts}</div></div>
   </div>`;
 }
 
