@@ -1808,6 +1808,80 @@ body.light #logo-img { filter: invert(1); }
 .cq-mode-btn{flex:1;padding:9px 12px;border-radius:var(--r-md);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--line-2);background:var(--surface-2);color:var(--text-2);transition:all .15s;text-align:center}
 .cq-mode-btn.on{background:var(--cyan-soft);color:var(--cyan-text);border-color:var(--cyan-border)}
 .cq-mode-btn:hover:not(.on){background:var(--surface-3);color:var(--text-0)}
+
+/* ═══════════════════════════════════════════════
+   ANIMATION FRAMEWORK (parallel, opt-in)
+   Use .anim-draw on buttons/links for stroke-based reveal
+   Use .anim-slide on bars/containers for translateY+fade
+   Toggle .is-visible to mount; remove to play exit
+   ═══════════════════════════════════════════════ */
+:root{
+  --anim-duration: 380ms;
+  --anim-duration-fast: 240ms;
+  --anim-easing: cubic-bezier(.4,0,.2,1);
+  --anim-easing-spring: cubic-bezier(.34,1.56,.64,1);
+  --anim-distance: 12px;
+}
+
+/* — SLIDE+FADE for containers/bars — */
+.anim-slide{
+  opacity:0;
+  transform:translateY(var(--anim-distance));
+  transition:opacity var(--anim-duration-fast) var(--anim-easing),
+             transform var(--anim-duration) var(--anim-easing-spring),
+             max-height var(--anim-duration) var(--anim-easing),
+             margin var(--anim-duration) var(--anim-easing),
+             padding var(--anim-duration) var(--anim-easing);
+  will-change:opacity, transform;
+}
+.anim-slide.is-visible{
+  opacity:1;
+  transform:translateY(0);
+}
+.anim-slide.is-exiting{
+  opacity:0;
+  transform:translateY(var(--anim-distance));
+  pointer-events:none;
+}
+
+/* — DRAW EFFECT for interactive elements —
+   Element must be position:relative and contain an SVG.anim-draw-svg with a rect/path
+   The SVG path/rect should have class .anim-draw-stroke
+*/
+.anim-draw{position:relative}
+.anim-draw .anim-draw-svg{
+  position:absolute;inset:0;
+  pointer-events:none;
+  overflow:visible;
+  width:100%;height:100%;
+}
+.anim-draw .anim-draw-stroke{
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.5;
+  stroke-linecap:round;
+  stroke-dasharray:var(--draw-len, 1000);
+  stroke-dashoffset:var(--draw-len, 1000);
+  transition:stroke-dashoffset var(--anim-duration) var(--anim-easing);
+}
+.anim-draw.is-visible .anim-draw-stroke{
+  stroke-dashoffset:0;
+}
+.anim-draw.is-exiting .anim-draw-stroke{
+  stroke-dashoffset:var(--draw-len, 1000);
+  transition:stroke-dashoffset var(--anim-duration-fast) var(--anim-easing);
+}
+/* Inner content of .anim-draw fades with the stroke */
+.anim-draw > :not(.anim-draw-svg){
+  opacity:0;
+  transition:opacity var(--anim-duration-fast) var(--anim-easing) calc(var(--anim-duration) * .4);
+}
+.anim-draw.is-visible > :not(.anim-draw-svg){opacity:1}
+.anim-draw.is-exiting > :not(.anim-draw-svg){
+  opacity:0;
+  transition:opacity var(--anim-duration-fast) var(--anim-easing);
+}
+
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -2177,6 +2251,54 @@ body.light #logo-img { filter: invert(1); }
 
 <script>
 const $=id=>document.getElementById(id);
+
+/* ═══ ANIMATION FRAMEWORK HELPERS ═══
+   toggleVisibility(el, status): mount with enter anim or unmount with exit anim
+   initAnimDraw(el): measures SVG stroke length for .anim-draw elements
+*/
+function toggleVisibility(el, status){
+  if(!el) return;
+  if(status){
+    // Ensure element is in DOM and visible
+    if(el.style.display==='none') el.style.display='';
+    el.classList.remove('is-exiting');
+    // Force reflow so transition triggers
+    el.offsetHeight;
+    if(el.classList.contains('anim-draw')) initAnimDraw(el);
+    requestAnimationFrame(()=>{el.classList.add('is-visible');});
+  } else {
+    if(!el.classList.contains('is-visible')&&!el.classList.contains('is-exiting')) return;
+    el.classList.remove('is-visible');
+    el.classList.add('is-exiting');
+    const dur=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--anim-duration'))||380;
+    setTimeout(()=>{
+      el.classList.remove('is-exiting');
+      if(el.dataset.unmountOnExit==='1') el.remove();
+      else if(el.dataset.hideOnExit==='1') el.style.display='none';
+    }, dur);
+  }
+}
+function initAnimDraw(el){
+  const svg=el.querySelector('.anim-draw-svg');
+  if(!svg||svg.dataset.init==='1') return;
+  const w=el.offsetWidth, h=el.offsetHeight;
+  // Default: build a rounded rect that traces the element border
+  let rect=svg.querySelector('.anim-draw-stroke');
+  if(!rect){
+    rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.classList.add('anim-draw-stroke');
+    rect.setAttribute('x','1');rect.setAttribute('y','1');
+    rect.setAttribute('rx','8');
+    svg.appendChild(rect);
+  }
+  rect.setAttribute('width',w-2);rect.setAttribute('height',h-2);
+  const r=parseFloat(rect.getAttribute('rx'))||8;
+  const len=2*(w+h-4)+(2*Math.PI*r-8*r);
+  el.style.setProperty('--draw-len', len+'px');
+  svg.dataset.init='1';
+}
+
+
 
 
 const FB_CFG = {
@@ -3159,7 +3281,7 @@ function buildCard(it,delay){
   const matchedCli=clients.find(cl=>cl.name===it.name||(it.phone&&cl.phone===it.phone));
   const codeBadgeCard=matchedCli&&matchedCli.code?`<span class="npcard-code">#${String(matchedCli.code).padStart(3,"0")}</span>`:"";
   const isNew=!_seenCards.has(it.id);_seenCards.add(it.id);const animClass=isNew?'':'no-anim';const animStyle=isNew?`animation-delay:${delay}ms`:'';const chkHtml=`<span class="card-chk${_selectedItems.has(it.id)?' on':''}" onclick="event.stopPropagation();toggleSelect(${it.id})"></span>`;const selCls=_selectedItems.has(it.id)?' selected':'';return `<div class="npcard ${animClass}${ovClass}${doneClass}${selCls}" data-id="${it.id}" style="${animStyle};border-color:transparent"><svg class="npcard-svg" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;pointer-events:none;overflow:visible;width:100%;height:100%;z-index:0"><rect class="npcard-svg-rect" fill="none" stroke-width="1.5" rx="13"/></svg>
-    <div class="npcard-head" onclick="event.stopPropagation();const _w=document.getElementById('acts-${it.id}');if(_w){_w.classList.toggle('expanded');_w.classList.toggle('collapsed')}" style="cursor:pointer">
+    <div class="npcard-head" onclick="event.stopPropagation();const _w=$('acts-${it.id}');if(_w)toggleVisibility(_w,!_w.classList.contains('is-visible'))" style="cursor:pointer">
       ${chkHtml}
       <div class="npcard-avatar-wrap">${avatarHtml}</div>
       <div class="npcard-head-main">
@@ -3176,7 +3298,7 @@ function buildCard(it,delay){
     </div>
     <div class="npcard-prods">${prodsHtml}</div>
     ${note}
-    <div class="npcard-acts-wrap ${isOv||it.done?"expanded":"collapsed"}" id="${actsId}"><div class="npcard-acts">${acts}</div></div>
+    <div class="npcard-acts-wrap anim-slide ${isOv||it.done?'is-visible':''}" id="${actsId}" data-hide-on-exit="0"><div class="npcard-acts">${acts}</div></div>
   </div>`;
 }
 
@@ -3371,24 +3493,8 @@ function markArrivedFancy(id,idx,btnEl){
     // 6. Expand npcard-acts-wrap if collapsed
     if(card){
       const wrap=card.querySelector('.npcard-acts-wrap');
-      if(wrap&&wrap.classList.contains('collapsed')){
-        wrap.classList.remove('collapsed');
-        wrap.style.maxHeight='0';
-        wrap.style.opacity='0';
-        wrap.style.overflow='hidden';
-        wrap.style.transition='max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s ease';
-        wrap.offsetHeight;
-        const innerAct=wrap.querySelector('.npcard-acts');
-        const targetH=innerAct?innerAct.scrollHeight+20:80;
-        requestAnimationFrame(()=>{
-          wrap.style.maxHeight=targetH+'px';
-          wrap.style.opacity='1';
-        });
-        setTimeout(()=>{
-          wrap.classList.add('expanded');
-          wrap.style.maxHeight='';
-          wrap.style.overflow='';
-        },360);
+      if(wrap&&!wrap.classList.contains('is-visible')){
+        toggleVisibility(wrap,true);
       }
     }
 
