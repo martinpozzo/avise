@@ -3457,8 +3457,7 @@ function markArrivedFancy(id,idx,btnEl){
     noBtn.style.pointerEvents='auto'; // restore so undo works
     noBtn.onclick=(e)=>{
       e.stopPropagation();
-      _silentSwap.delete(id);
-      unmarkArrived(id,idx);
+      unmarkArrivedFancy(id, idx, noBtn);
     };
   },200);
 
@@ -3548,6 +3547,143 @@ function markArrivedFancy(id,idx,btnEl){
       setTimeout(()=>_silentSwap.delete(id),2500);
     },500);
   },500);
+}
+
+
+function unmarkArrivedFancy(id, idx, refreshBtn){
+  const act = refreshBtn.closest('.npitem-act');
+  if(!act){ _silentSwap.delete(id); unmarkArrived(id, idx); return; }
+
+  const card = act.closest('.npcard');
+  const npitem = act.closest('.npitem');
+  const lbl = act.querySelector('.npitem-lbl');
+  const siBtn = act.querySelector('.np-btn-go');
+  const isMobile = window.innerWidth <= 768;
+  const it = items.find(i => i.id === id);
+  const p = it && it.products && it.products[idx];
+
+  // Lock buttons during animation
+  refreshBtn.style.pointerEvents = 'none';
+  if(siBtn) siBtn.style.pointerEvents = 'none';
+
+  // 1. Refresh icon morphs back to "No"
+  refreshBtn.style.transition = 'transform .35s cubic-bezier(.65,0,.35,1), opacity .2s ease';
+  refreshBtn.style.opacity = '0';
+  refreshBtn.style.transform = 'rotate(180deg) scale(.6)';
+  setTimeout(()=>{
+    refreshBtn.innerHTML = 'No';
+    refreshBtn.style.opacity = '1';
+    refreshBtn.style.transform = 'rotate(0deg) scale(1)';
+    refreshBtn.style.pointerEvents = 'auto';
+    refreshBtn.onclick = (e)=>{ e.stopPropagation(); togRp('rp-'+id+'-'+idx, e); };
+  }, 200);
+
+  // 2. Fade label "✓ Ingresó" back to "¿Ingresó?"
+  if(lbl){
+    lbl.style.transition = 'opacity .2s ease, color .35s ease';
+    lbl.style.opacity = '0';
+    setTimeout(()=>{
+      lbl.innerHTML = '¿Ingresó?';
+      lbl.style.color = '';
+      lbl.style.opacity = '1';
+    }, 200);
+  }
+
+  // 3. npitem styling reverts (background, border, opacity)
+  if(npitem){
+    npitem.style.transition = 'background .4s ease, border-color .4s ease, opacity .4s ease';
+    npitem.style.background = '';
+    npitem.style.borderColor = '';
+    npitem.style.opacity = '';
+  }
+
+  // 4. Card visual reverts (shadow, bg, border)
+  if(card){
+    card.style.transition = 'box-shadow .4s ease, background .4s ease, border-color .4s ease';
+    card.style.boxShadow = '';
+    card.style.background = '';
+    card.style.borderColor = '';
+    if(p && isArrival(p.exp)){
+      setTimeout(()=>card.classList.add('npcard-over'), 300);
+    }
+  }
+
+  // 5. WhatsApp button text "Avisar" → "WhatsApp"
+  if(card){
+    const waBtn = card.querySelector('.np-act-wa');
+    if(waBtn){
+      const span = Array.from(waBtn.childNodes).find(n => n.nodeType === 1 && n.tagName === 'SPAN');
+      if(span){
+        span.style.transition = 'opacity .2s ease';
+        span.style.opacity = '0';
+        setTimeout(()=>{
+          span.textContent = ' WhatsApp';
+          span.style.opacity = '1';
+        }, 200);
+      }
+    }
+  }
+
+  // 6. Restore Sí button: expand width + draw SVG border back IN + restore content
+  if(siBtn){
+    const svg = siBtn.querySelector('svg[preserveAspectRatio]');
+    const rect = svg ? svg.querySelector('rect') : null;
+
+    // Expand width back
+    siBtn.style.transition = 'width .35s cubic-bezier(.65,0,.35,1), padding .35s cubic-bezier(.65,0,.35,1), margin .35s cubic-bezier(.65,0,.35,1)';
+    siBtn.style.width = '';
+    siBtn.style.padding = '';
+    siBtn.style.marginLeft = '';
+    siBtn.style.flex = '';
+    siBtn.style.overflow = '';
+
+    setTimeout(()=>{
+      // SVG border draws back in (stroke-dashoffset → 0)
+      if(rect){
+        rect.style.transition = 'stroke-dashoffset .45s cubic-bezier(.65,0,.35,1)';
+        rect.style.strokeDashoffset = '0';
+      }
+      // Inner content (text "Sí" + check icon) fades back in
+      Array.from(siBtn.childNodes).forEach(n=>{
+        if(n.nodeType === 1 && n !== svg){
+          n.style.transition = 'opacity .25s ease';
+          n.style.opacity = '1';
+        }
+      });
+      // Bg, border, shadow fade back simultaneously
+      siBtn.style.transition = 'border-color .45s cubic-bezier(.65,0,.35,1), background-color .45s cubic-bezier(.65,0,.35,1), box-shadow .45s cubic-bezier(.65,0,.35,1)';
+      siBtn.style.borderColor = '';
+      siBtn.style.backgroundColor = '';
+      siBtn.style.boxShadow = '';
+      siBtn.style.pointerEvents = 'auto';
+
+      // After draw-in completes, remove the SVG (CSS border takes over)
+      setTimeout(()=>{
+        if(svg && svg.parentNode) svg.remove();
+        siBtn.style.position = '';
+      }, 480);
+    }, 200);
+  }
+
+  // 7. Collapse WhatsApp/Avisado bar on mobile if no other arrived/overdue products
+  if(card && isMobile){
+    const wrap = card.querySelector('.npcard-acts-wrap');
+    if(wrap && wrap.classList.contains('is-visible')){
+      const hasOtherArrived = it && it.products && it.products.some((pp, pi) => pi !== idx && pp.arrived);
+      const isOv = it && it.products && it.products.some(pp => isArrival(pp.exp) && !pp.arrived);
+      if(!hasOtherArrived && !isOv && !(it && it.done)){
+        setTimeout(()=>toggleVisibility(wrap, false), 250);
+      }
+    }
+  }
+
+  // 8. After animations complete, update data silently (no DOM rebuild)
+  setTimeout(()=>{
+    _silentSwap.add(id);
+    if(it && it.products[idx]) it.products[idx].arrived = false;
+    push();
+    setTimeout(()=>_silentSwap.delete(id), 2500);
+  }, 700);
 }
 
 function markArrived(id,idx){
