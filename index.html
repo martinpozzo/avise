@@ -1063,8 +1063,6 @@ details[open] .trash-chevron{transform:rotate(180deg)}
 
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:768px){
-  .npcard-acts-wrap.anim-slide:not(.is-visible){max-height:0;opacity:0;transform:translateY(-6px);pointer-events:none}
-  .npcard-acts-wrap.anim-slide.is-visible{max-height:140px;opacity:1;transform:translateY(0)}
   /* HEADER */
   .hdr{padding:0 14px;height:52px}
   .logo-box{width:26px;height:26px;border-radius:7px}
@@ -1789,6 +1787,8 @@ body.light #logo-img { filter: invert(1); }
 
   /* Actions collapsed on mobile */
   .npcard-acts-wrap{overflow:hidden;max-height:140px;transition:max-height .35s var(--anim-easing), opacity .25s var(--anim-easing), transform .35s var(--anim-easing-spring);transform:translateY(0)}
+.npcard-acts-wrap.anim-slide:not(.is-visible){max-height:0;opacity:0;transform:translateY(-6px);pointer-events:none}
+.npcard-acts-wrap.anim-slide.is-visible{max-height:140px;opacity:1;transform:translateY(0)}
   .npcard-tap-hint{font-size:10px;color:var(--text-3);text-align:right;padding:2px 0 0;display:none}
 
 /* Panel scroll wrapper - allows dropdown to escape overflow */
@@ -3335,7 +3335,7 @@ function buildCard(it,delay){
     </div>
     <div class="npcard-prods">${prodsHtml}</div>
     ${note}
-    <div class="npcard-acts-wrap anim-slide ${isOv||it.done||!isMobile?'is-visible':''}" id="${actsId}"><div class="npcard-acts">${acts}</div></div>
+    <div class="npcard-acts-wrap anim-slide ${isOv||it.done?'is-visible':''}" id="${actsId}"><div class="npcard-acts">${acts}</div></div>
   </div>`;
 }
 
