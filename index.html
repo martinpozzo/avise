@@ -1786,7 +1786,9 @@ body.light #logo-img { filter: invert(1); }
 .btn-add-sel{justify-content:center;margin-bottom:6px;border-radius:var(--r-md);animation:cin .18s ease}
 
   /* Actions collapsed on mobile */
-  .npcard-acts-wrap{overflow:hidden}
+  .npcard-acts-wrap{overflow:hidden;max-height:140px;transition:max-height .35s var(--anim-easing), opacity .25s var(--anim-easing), transform .35s var(--anim-easing-spring);transform:translateY(0)}
+  .npcard-acts-wrap.anim-slide:not(.is-visible){max-height:0;opacity:0;transform:translateY(-6px);pointer-events:none}
+  .npcard-acts-wrap.anim-slide.is-visible{max-height:140px;opacity:1;transform:translateY(0)}
   .npcard-tap-hint{font-size:10px;color:var(--text-3);text-align:right;padding:2px 0 0;display:none}
 
 /* Panel scroll wrapper - allows dropdown to escape overflow */
@@ -3316,7 +3318,7 @@ function buildCard(it,delay){
   const matchedCli=clients.find(cl=>cl.name===it.name||(it.phone&&cl.phone===it.phone));
   const codeBadgeCard=matchedCli&&matchedCli.code?`<span class="npcard-code">#${String(matchedCli.code).padStart(3,"0")}</span>`:"";
   const isNew=!_seenCards.has(it.id);_seenCards.add(it.id);const animClass=isNew?'':'no-anim';const animStyle=isNew?`animation-delay:${delay}ms`:'';const chkHtml=`<span class="card-chk${_selectedItems.has(it.id)?' on':''}" onclick="event.stopPropagation();toggleSelect(${it.id})"></span>`;const selCls=_selectedItems.has(it.id)?' selected':'';return `<div class="npcard ${animClass}${ovClass}${doneClass}${selCls}" data-id="${it.id}" style="${animStyle};border-color:transparent"><svg class="npcard-svg" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;pointer-events:none;overflow:visible;width:100%;height:100%;z-index:0"><rect class="npcard-svg-rect" fill="none" stroke-width="1.5" rx="13"/></svg>
-    <div class="npcard-head" onclick="event.stopPropagation();const _w=$('acts-${it.id}');if(_w)toggleVisibility(_w,!_w.classList.contains('is-visible'))" style="cursor:pointer">
+    <div class="npcard-head">
       ${chkHtml}
       <div class="npcard-avatar-wrap">${avatarHtml}</div>
       <div class="npcard-head-main">
