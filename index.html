@@ -3267,9 +3267,9 @@ function buildCard(it,delay){
     prodsHtml+=`<div class="npitem-main"><span class="npitem-name">${esc(p.name)}</span>${expTag(p.exp,p)}</div>`;
     
     if(p.arrived&&!it.done){
-      prodsHtml+=`<div class="npitem-act" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">${ICO.CHECK} Ingresó</span><button class="np-btn np-btn-ghost" onclick="unmarkArrived(${it.id},${i})">${ICO.REFRESH}</button></div>`;
+      prodsHtml+=`<div class="npitem-act anim-slide ${autoExpand?'is-visible':''}" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">${ICO.CHECK} Ingresó</span><button class="np-btn np-btn-ghost" onclick="unmarkArrived(${it.id},${i})">${ICO.REFRESH}</button></div>`;
     } else if(showActions){
-      prodsHtml+=`<div class="npitem-act" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">¿Ingresó?</span><button class="np-btn np-btn-go" onclick="markArrivedFancy(${it.id},${i},this)">${ICO.CHECK} Sí</button><button class="np-btn np-btn-ghost" onclick="togRp('${rpId}',event)">No</button></div>`;
+      prodsHtml+=`<div class="npitem-act anim-slide ${autoExpand?'is-visible':''}" id="${actId}" style="${autoExpand?'':'display:none'}"><span class="npitem-lbl">¿Ingresó?</span><button class="np-btn np-btn-go" onclick="markArrivedFancy(${it.id},${i},this)">${ICO.CHECK} Sí</button><button class="np-btn np-btn-ghost" onclick="togRp('${rpId}',event)">No</button></div>`;
       prodsHtml+=`<div class="rpanel" id="${rpId}"><div class="rp-dates">`;
       if(p.exp&&p.exp!=='indef'&&!isArrival(p.exp)){
         prodsHtml+=`<button class="rqd" onclick="rpKeep(${it.id},${i},this)">${ICO.CHECK} Mantener (${fd(p.exp)})</button>`;
@@ -3376,10 +3376,13 @@ function rpDel(id,idx){
 function togAct(id){
   const el=$(id);
   if(!el) return;
-  if(el.style.display==='none'||el.style.display===''){
+  const isHidden=el.style.display==='none'||!el.classList.contains('is-visible');
+  if(isHidden){
     el.style.display='flex';
+    el.dataset.hideOnExit='1';
+    requestAnimationFrame(()=>toggleVisibility(el,true));
   } else {
-    el.style.display='none';
+    toggleVisibility(el,false);
   }
 }
 function markArrivedFancy(id,idx,btnEl){
